@@ -6,7 +6,7 @@ defmodule AbnfParsecTest do
     "ALPHA DIGIT HEXDIG DQUOTE SP HTAB WSP LWSP VCHAR CHAR OCTET CTL CR LF CRLF BIT"
     |> String.split()
     |> Enum.each(fn rule ->
-      assert {:ok, [core: [^rule]], "", %{}, {1, 0}, _} = AbnfParsec.core_rule(rule)
+      assert {:ok, [core: ^rule], "", %{}, {1, 0}, _} = AbnfParsec.core_rule(rule)
     end)
   end
 
