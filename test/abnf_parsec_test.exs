@@ -13,12 +13,6 @@ defmodule AbnfParsecTest do
   test "parse comments" do
     assert {:ok, [comment: ["some comments"]], "", %{}, {1, 0}, 15} =
              AbnfParsec.comment("; some comments")
-
-    assert {:ok, [comment: ["1st line", "2nd line"]], "", %{}, {3, 24}, 24} =
-             AbnfParsec.comment("; 1st line\r\n; 2nd line\r\n")
-
-    assert {:ok, [comment: ["1st line", "2nd line"]], "", %{}, {2, 12}, 22} =
-             AbnfParsec.comment("; 1st line\r\n; 2nd line")
   end
 
   test "parse rule name" do
@@ -30,16 +24,20 @@ defmodule AbnfParsecTest do
   end
 
   test "parse repetition" do
-    assert {:ok, [repetition: [min: 1, max: 2, rule: "abc"]], "", %{}, {1, 0}, 6} =
+    assert {:ok, [repetition: [repeat: [min: 1, max: 2], rule: "abc"]], "", %{}, {1, 0}, 6} =
              AbnfParsec.repetition("1*2abc")
 
-    assert {:ok, [repetition: [max: 2, rule: "abc"]], "", %{}, {1, 0}, 5} =
+    assert {:ok, [repetition: [repeat: [max: 2], rule: "abc"]], "", %{}, {1, 0}, 5} =
              AbnfParsec.repetition("*2abc")
 
-    assert {:ok, [repetition: [min: 1, rule: "abc"]], "", %{}, {1, 0}, 5} =
+    assert {:ok, [repetition: [repeat: [min: 1], rule: "abc"]], "", %{}, {1, 0}, 5} =
              AbnfParsec.repetition("1*abc")
 
-    assert {:ok, [repetition: [rule: "abc"]], "", %{}, {1, 0}, 4} = AbnfParsec.repetition("*abc")
+    assert {:ok, [repetition: [repeat: [], rule: "abc"]], "", %{}, {1, 0}, 4} =
+             AbnfParsec.repetition("*abc")
+
+    assert {:ok, [repetition: [repeat: [times: 3], rule: "abc"]], "", %{}, {1, 0}, 4} =
+             AbnfParsec.repetition("3abc")
   end
 
   test "parse optional" do
@@ -51,12 +49,13 @@ defmodule AbnfParsecTest do
   end
 
   test "parse numeric" do
-    assert {:ok, [{:base, 120}, "af"], "", %{}, {1, 0}, 4} = AbnfParsec.numeric("%xaf")
+    assert {:ok, [numeric_literal: [{:base, "x"}, "af"]], "", %{}, {1, 0}, 4} =
+             AbnfParsec.numeric("%xaf")
 
-    assert {:ok, [numeric_range: [{:base, 120}, "31", "39"]], "", %{}, {1, 0}, 7} =
+    assert {:ok, [numeric_range: [{:base, "x"}, "31", "39"]], "", %{}, {1, 0}, 7} =
              AbnfParsec.numeric("%x31-39")
 
-    assert {:ok, [numeric_sequence: [{:base, 120}, "97", "66", "99"]], "", %{}, {1, 0}, 10} =
+    assert {:ok, [numeric_sequence: [{:base, "x"}, "97", "66", "99"]], "", %{}, {1, 0}, 10} =
              AbnfParsec.numeric("%x97.66.99")
   end
 
@@ -68,36 +67,149 @@ defmodule AbnfParsecTest do
   end
 
   test "parse concatenation" do
-    assert {:ok, [concatenation: [rule: "a", rule: "b", rule: "c"]], "", %{}, {1, 0}, 5} =
-             AbnfParsec.concatenation("a b c")
+    assert {:ok, [concatenation: [rule: "b"]], "", %{}, {1, 0}, 2} =
+             AbnfParsec.concatenation(" b")
   end
 
   test "parse alternative" do
-    assert {:ok, [alternative: [rule: "a", rule: "b", rule: "c"]], "", %{}, {1, 0}, 9} =
-             AbnfParsec.alternative("a / b / c")
+    assert {:ok, [alternative: [rule: "b"]], "", %{}, {1, 0}, 4} = AbnfParsec.alternative(" / b")
   end
 
   test "parse expr" do
     assert {:ok, ["abc"], "", %{}, {1, 0}, 5} = AbnfParsec.expr(~s|"abc"|)
-    assert {:ok, [optional: [rule: "abc"]], "", %{}, {1, 0}, 5} = AbnfParsec.expr("[abc]")
-
-    assert {:ok, [alternative: [rule: "a", rule: "b", rule: "c"]], "", %{}, {1, 0}, 9} =
-             AbnfParsec.expr("a / b / c")
-
-    assert {:ok, [rule: "a-b-c"], "", %{}, {1, 0}, 5} = AbnfParsec.expr("a-b-c")
-
-    assert {:ok, [group: [concatenation: [rule: "a", rule: "b", rule: "c"]]], "", %{}, {1, 0}, 7} =
-             AbnfParsec.expr("(a b c)")
 
     assert {:ok,
             [
-              alternative: [
-                {:rule, "a"},
-                {:base, 120},
-                "49",
-                {:numeric_range, [{:base, 120}, "51", "59"]},
-                {:repetition, [min: 1, max: 2, group: [alternative: [rule: "b", rule: "c"]]]}
+              optional: [
+                rule: "a",
+                concatenation: [rule: "b", concatenation: [rule: "c"]]
               ]
-            ], "", %{}, {1, 0}, 31} = AbnfParsec.expr(~s|a / %x49 / %x51-59 / 1*2(b / c)|)
+            ], "", %{}, {1, 0}, 7} = AbnfParsec.expr("[a b c]")
+
+    assert {:ok, [rule: "a", alternative: [rule: "b", alternative: [rule: "c"]]], "", %{}, {1, 0},
+            9} = AbnfParsec.expr("a / b / c")
+
+    assert {:ok, [rule: "a-b-c"], "", %{}, {1, 0}, 5} = AbnfParsec.expr("a-b-c")
+
+    assert {:ok,
+            [
+              group: [
+                rule: "a",
+                concatenation: [rule: "b", concatenation: [rule: "c"]]
+              ]
+            ], "", %{}, {1, 0}, 7} = AbnfParsec.expr("(a b c)")
+
+    assert {:ok,
+            [
+              rule: "a",
+              concatenation: [
+                group: [
+                  repetition: [
+                    repeat: [times: 3],
+                    rule: "b",
+                    concatenation: [
+                      optional: [rule: "c", concatenation: [rule: "d"]]
+                    ]
+                  ]
+                ],
+                alternative: [
+                  numeric_literal: [{:base, "x"}, "49"],
+                  concatenation: [
+                    "x",
+                    {:alternative,
+                     [
+                       numeric_range: [{:base, "x"}, "51", "59"],
+                       alternative: [
+                         repetition: [
+                           repeat: [min: 1, max: 2],
+                           group: [rule: "b", alternative: [rule: "c"]]
+                         ]
+                       ]
+                     ]}
+                  ]
+                ]
+              ]
+            ], "", %{}, {1, 0},
+            46} = AbnfParsec.expr(~s|a (3b [c d]) / %x49 "x" / %x51-59 / 1*2(b / c)|)
+
+    assert {:ok, ["1", {:comment, ["a = 1"]}], "\r\n", %{}, {2, 5}, 13} =
+             AbnfParsec.expr(
+               abnf("""
+               "1"
+                ; a = 1
+               """)
+             )
+  end
+
+  test "parse" do
+    assert {:ok, [definition: ["a", {:numeric_literal, [{:base, "x"}, "1"]}]], "", %{}, {2, 9}, 9} =
+             AbnfParsec.parse(abnf("a = %x1"))
+
+    assert {:ok,
+            [
+              definition: [
+                "a",
+                "a",
+                {:alternative, [numeric_literal: [{:base, "x"}, "31"]]}
+              ]
+            ], "", %{}, {2, 16}, 16} = AbnfParsec.parse(abnf(~s{a = "a" / %x31}))
+
+    assert {:ok, [definition: ["a", "1"], definition: ["b", "2"]], "", %{}, {3, 18}, 18} =
+             AbnfParsec.parse(
+               abnf("""
+               a = "1"
+               b = "2"
+               """)
+             )
+
+    assert {:ok,
+            [
+              definition: [
+                "a",
+                "1",
+                {:comment, ["a = 1"]},
+                {:comment, ["b does not exist"]}
+              ]
+            ], "", %{}, {4, 46},
+            46} =
+             AbnfParsec.parse(
+               abnf("""
+               a = "1"
+                   ; a = 1
+                   ; b does not exist
+               """)
+             )
+  end
+
+  test "parse!" do
+    assert [definition: ["a", {:numeric_literal, [{:base, "x"}, "1"]}]] =
+             AbnfParsec.parse!(abnf("a = %x1"))
+
+    assert [
+             definition: [
+               "a",
+               "a",
+               {:alternative, [numeric_literal: [{:base, "x"}, "31"]]}
+             ]
+           ] = AbnfParsec.parse!(abnf(~s{a = "a" / %x31}))
+
+    assert [definition: ["a", "1"], definition: ["b", "2"]] =
+             AbnfParsec.parse!(
+               abnf("""
+               a = "1"
+
+               b = "2"
+               """)
+             )
+
+    assert_raise AbnfParsec.UnexpectedTokenError, fn -> AbnfParsec.parse!(abnf("1 = %x1")) end
+    assert_raise AbnfParsec.LeftoverTokenError, fn -> AbnfParsec.parse!("a = %x1\r\nb = ?") end
+  end
+
+  defp abnf(s) do
+    s
+    |> String.split("\n", trim: true)
+    |> Enum.join("\r\n")
+    |> Kernel.<>("\r\n")
   end
 end

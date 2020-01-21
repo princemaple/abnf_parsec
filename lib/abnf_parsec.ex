@@ -4,6 +4,9 @@ defmodule AbnfParsec do
   @moduledoc """
   Documentation for AbnfParsec.
   """
+
+  space = ascii_string([?\ ], min: 1)
+
   alpha = string("ALPHA") |> tag(:core)
   digit = string("DIGIT") |> tag(:core)
   hexdig = string("HEXDIG") |> tag(:core)
@@ -42,14 +45,11 @@ defmodule AbnfParsec do
     ])
 
   comment =
-    times(
-      ignore(string(";"))
-      |> optional(ignore(ascii_string([?\ ], min: 1)))
-      |> repeat_while(ascii_char([]), {:not_cr_lf, []})
-      |> optional(ignore(string("\r\n")))
-      |> reduce({List, :to_string, []}),
-      min: 1
-    )
+    repeat(space)
+    |> ignore(string(";"))
+    |> optional(ignore(space))
+    |> repeat_while(ascii_char([]), {:not_cr_lf, []})
+    |> reduce({List, :to_string, []})
     |> tag(:comment)
 
   name =
@@ -92,9 +92,13 @@ defmodule AbnfParsec do
 
   numeric =
     ignore(string("%"))
-    |> ascii_char([?b, ?d, ?x])
+    |> (ascii_char('xbd') |> map(:binary_wrap))
     |> unwrap_and_tag(:base)
     |> concat(number)
+
+  numeric_literal =
+    numeric
+    |> tag(:numeric_literal)
 
   numeric_range =
     numeric
@@ -107,12 +111,18 @@ defmodule AbnfParsec do
     |> times(ignore(string(".")) |> concat(number), min: 1)
     |> tag(:numeric_sequence)
 
-  numeric_expr = choice([numeric_range, numeric_sequence, numeric])
+  numeric_expr = choice([numeric_range, numeric_sequence, numeric_literal])
 
-  repetition_expr =
+  repetition_range =
     optional(integer(min: 1) |> unwrap_and_tag(:min))
     |> ignore(string("*"))
     |> optional(integer(min: 1) |> unwrap_and_tag(:max))
+
+  repetition_exact = integer(min: 1) |> unwrap_and_tag(:times)
+
+  repetition_expr =
+    choice([repetition_range, repetition_exact])
+    |> tag(:repeat)
     |> concat(parsec(:expr))
     |> tag(:repetition)
 
@@ -129,51 +139,59 @@ defmodule AbnfParsec do
     |> tag(:optional)
 
   concatenation =
-    parsec(:expr_x)
-    |> times(
-      ignore(ascii_char([?\ ]))
-      |> concat(parsec(:expr_x)),
-      min: 1
-    )
+    ignore(space)
+    |> concat(parsec(:expr))
     |> tag(:concatenation)
 
   alternative =
-    parsec(:expr_x)
-    |> times(
-      ignore(string(" / "))
-      |> concat(parsec(:expr_x)),
-      min: 1
-    )
+    ignore(space)
+    |> ignore(string("/"))
+    |> ignore(space)
+    |> concat(parsec(:expr))
     |> tag(:alternative)
 
   defp not_cr_lf(<<"\r\n", _::binary>>, context, _, _), do: {:halt, context}
   defp not_cr_lf(_, context, _, _), do: {:cont, context}
 
-  defparsec :expr,
-            choice([
-              alternative,
-              concatenation,
-              group,
-              optional_expr,
-              repetition_expr,
-              comment,
-              numeric_expr,
-              string_expr,
-              rule,
-              core_rule
-            ])
+  defp binary_wrap(code), do: <<code>>
 
-  defparsec :expr_x,
-            choice([
-              group,
-              optional_expr,
-              repetition_expr,
-              comment,
-              numeric_expr,
-              string_expr,
-              rule,
-              core_rule
-            ])
+  defparsec :expr,
+            times(
+              choice([
+                core_rule,
+                rule,
+                string_expr,
+                numeric_expr,
+                comment,
+                repetition_expr,
+                optional_expr,
+                group,
+                concatenation,
+                alternative,
+                ignore(string("\r\n") |> ascii_string([?\ ], min: 1))
+              ]),
+              min: 1
+            )
+
+  defparsec :parse,
+            times(
+              name
+              |> ignore(space)
+              |> ignore(string("="))
+              |> ignore(space)
+              |> parsec(:expr)
+              |> ignore(times(string("\r\n"), min: 1))
+              |> tag(:definition),
+              min: 1
+            )
+
+  def parse!(text) do
+    case parse(text) do
+      {:ok, syntax, "", _, _, _} -> syntax
+      {:ok, _, leftover, _, _, _} -> raise AbnfParsec.LeftoverTokenError, "Leftover: #{leftover}"
+      {:error, error, _, _, _, _} -> raise AbnfParsec.UnexpectedTokenError, error
+    end
+  end
 
   # for unit tests
   defparsec :rule, rule
