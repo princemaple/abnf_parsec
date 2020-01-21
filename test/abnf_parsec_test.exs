@@ -134,7 +134,7 @@ defmodule AbnfParsecTest do
 
     assert {:ok, ["1", {:comment, ["a = 1"]}], "\r\n", %{}, {2, 5}, 13} =
              AbnfParsec.expr(
-               abnf("""
+               AbnfParsec.normalize("""
                "1"
                 ; a = 1
                """)
@@ -143,7 +143,7 @@ defmodule AbnfParsecTest do
 
   test "parse" do
     assert {:ok, [definition: ["a", {:numeric_literal, [{:base, "x"}, "1"]}]], "", %{}, {2, 9}, 9} =
-             AbnfParsec.parse(abnf("a = %x1"))
+             AbnfParsec.parse(AbnfParsec.normalize("a = %x1"))
 
     assert {:ok,
             [
@@ -152,11 +152,11 @@ defmodule AbnfParsecTest do
                 "a",
                 {:alternative, [numeric_literal: [{:base, "x"}, "31"]]}
               ]
-            ], "", %{}, {2, 16}, 16} = AbnfParsec.parse(abnf(~s{a = "a" / %x31}))
+            ], "", %{}, {2, 16}, 16} = AbnfParsec.parse(AbnfParsec.normalize(~s{a = "a" / %x31}))
 
     assert {:ok, [definition: ["a", "1"], definition: ["b", "2"]], "", %{}, {3, 18}, 18} =
              AbnfParsec.parse(
-               abnf("""
+               AbnfParsec.normalize("""
                a = "1"
                b = "2"
                """)
@@ -173,7 +173,7 @@ defmodule AbnfParsecTest do
             ], "", %{}, {4, 46},
             46} =
              AbnfParsec.parse(
-               abnf("""
+               AbnfParsec.normalize("""
                a = "1"
                    ; a = 1
                    ; b does not exist
@@ -183,7 +183,7 @@ defmodule AbnfParsecTest do
 
   test "parse!" do
     assert [definition: ["a", {:numeric_literal, [{:base, "x"}, "1"]}]] =
-             AbnfParsec.parse!(abnf("a = %x1"))
+             AbnfParsec.parse!(AbnfParsec.normalize("a = %x1"))
 
     assert [
              definition: [
@@ -191,25 +191,21 @@ defmodule AbnfParsecTest do
                "a",
                {:alternative, [numeric_literal: [{:base, "x"}, "31"]]}
              ]
-           ] = AbnfParsec.parse!(abnf(~s{a = "a" / %x31}))
+           ] = AbnfParsec.parse!(AbnfParsec.normalize(~s{a = "a" / %x31}))
 
     assert [definition: ["a", "1"], definition: ["b", "2"]] =
              AbnfParsec.parse!(
-               abnf("""
+               AbnfParsec.normalize("""
                a = "1"
 
                b = "2"
                """)
              )
 
-    assert_raise AbnfParsec.UnexpectedTokenError, fn -> AbnfParsec.parse!(abnf("1 = %x1")) end
-    assert_raise AbnfParsec.LeftoverTokenError, fn -> AbnfParsec.parse!("a = %x1\r\nb = ?") end
-  end
+    assert_raise AbnfParsec.UnexpectedTokenError, fn ->
+      AbnfParsec.parse!(AbnfParsec.normalize("1 = %x1"))
+    end
 
-  defp abnf(s) do
-    s
-    |> String.split("\n", trim: true)
-    |> Enum.join("\r\n")
-    |> Kernel.<>("\r\n")
+    assert_raise AbnfParsec.LeftoverTokenError, fn -> AbnfParsec.parse!("a = %x1\r\nb = ?") end
   end
 end

@@ -193,7 +193,13 @@ defmodule AbnfParsec do
     end
   end
 
-  # for unit tests
+  def normalize(text) do
+    text
+    |> String.split("\n", trim: true)
+    |> Enum.join("\r\n")
+    |> Kernel.<>("\r\n")
+  end
+
   defparsec :rule, rule
   defparsec :comment, comment
   defparsec :repetition, repetition_expr
