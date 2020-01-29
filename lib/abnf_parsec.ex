@@ -5,8 +5,6 @@ defmodule AbnfParsec do
   Documentation for AbnfParsec.
   """
 
-  space = ascii_string([?\ ], min: 1)
-
   alpha = string("ALPHA") |> unwrap_and_tag(:core)
   digit = string("DIGIT") |> unwrap_and_tag(:core)
   hexdig = string("HEXDIG") |> unwrap_and_tag(:core)
@@ -44,31 +42,26 @@ defmodule AbnfParsec do
       bit
     ])
 
+  help_space = ascii_string([?\ , ?\t], min: 1)
+
   comment =
-    repeat(space)
-    |> ignore(string(";"))
-    |> optional(ignore(space))
-    |> repeat_while(ascii_char([]), {:not_cr_lf, []})
+    ignore(string(";"))
+    |> optional(ignore(help_space))
+    |> repeat_while(ascii_char([?\ , ?\t, 0x21..0x7E]), {:not_cr_lf, []})
+    |> ignore(string("\r\n"))
     |> reduce({List, :to_string, []})
-    |> tag(:comment)
+    |> unwrap_and_tag(:comment)
 
-  name =
-    ascii_char([?a..?z, ?A..?Z])
-    |> repeat(ascii_char([?a..?z, ?A..?Z, ?0..?9, ?-]))
-    |> reduce({List, :to_string, []})
+  defp not_cr_lf(<<"\r\n", _::binary>>, context, _, _), do: {:halt, context}
+  defp not_cr_lf(_, context, _, _), do: {:cont, context}
 
-  rule =
-    choice([
-      name,
-      ignore(string("<"))
-      |> concat(name)
-      |> ignore(string(">"))
-    ])
-    |> unwrap_and_tag(:rule)
+  c_nl = choice([parsec(:comment), ignore(string("\r\n"))])
+
+  c_wsp = choice([ignore(help_space), c_nl |> ignore(help_space)])
 
   string_literal =
     ignore(string("\""))
-    |> ascii_string([{:not, ?"}], min: 0)
+    |> ascii_string([0x20, 0x21, 0x23..0x7E], min: 0)
     |> ignore(string("\""))
 
   case_insensitive_string_literal =
@@ -81,14 +74,14 @@ defmodule AbnfParsec do
     |> concat(string_literal)
     |> unwrap_and_tag(:case_sensitive)
 
-  string_expr =
+  char_val =
     choice([
       string_literal,
       case_insensitive_string_literal,
       case_sensitive_string_literal
     ])
 
-  number = ascii_string([?0..?9, ?a..?f], min: 1)
+  number = ascii_string([?0..?9, ?A..?F], min: 1)
 
   numeric =
     ignore(string("%"))
@@ -96,118 +89,155 @@ defmodule AbnfParsec do
     |> unwrap_and_tag(:base)
     |> concat(number)
 
-  numeric_literal =
-    numeric
-    |> tag(:numeric_literal)
+  defp binary_wrap(code), do: <<code>>
 
-  numeric_range =
+  num_literal =
+    numeric
+    |> tag(:num_literal)
+
+  num_range =
     numeric
     |> ignore(string("-"))
     |> concat(number)
-    |> tag(:numeric_range)
+    |> tag(:num_range)
 
-  numeric_sequence =
+  num_sequence =
     numeric
     |> times(ignore(string(".")) |> concat(number), min: 1)
-    |> tag(:numeric_sequence)
+    |> tag(:num_sequence)
 
-  numeric_expr = choice([numeric_range, numeric_sequence, numeric_literal])
+  num_val = choice([num_range, num_sequence, num_literal])
 
-  repetition_range =
-    optional(integer(min: 1) |> unwrap_and_tag(:min))
-    |> ignore(string("*"))
-    |> optional(integer(min: 1) |> unwrap_and_tag(:max))
+  rulename =
+    ascii_char([?a..?z, ?A..?Z])
+    |> repeat(ascii_char([?a..?z, ?A..?Z, ?0..?9, ?-]))
+    |> reduce({List, :to_string, []})
+    |> unwrap_and_tag(:rulename)
 
-  repetition_exact = integer(min: 1) |> unwrap_and_tag(:times)
-
-  repetition_expr =
-    choice([repetition_range, repetition_exact])
-    |> tag(:repeat)
-    |> concat(parsec(:expr))
-    |> tag(:repetition)
+  define_as =
+    repeat(c_wsp)
+    |> choice([string("="), string("=/")])
+    |> repeat(c_wsp)
 
   group =
     ignore(string("("))
-    |> concat(parsec(:expr))
+    |> ignore(repeat(c_wsp))
+    |> concat(parsec(:alternation))
+    |> ignore(repeat(c_wsp))
     |> ignore(string(")"))
     |> tag(:group)
 
-  optional_expr =
+  option =
     ignore(string("["))
-    |> concat(parsec(:expr))
+    |> ignore(repeat(c_wsp))
+    |> concat(parsec(:alternation))
+    |> ignore(repeat(c_wsp))
     |> ignore(string("]"))
-    |> tag(:optional)
+    |> tag(:option)
+
+  prose_val =
+    ignore(string("<"))
+    |> ascii_string([0x20..0x3D, 0x3F..0x7E], min: 1)
+    |> ignore(string(">"))
+    |> tag(:option)
+
+  element =
+    choice([
+      parsec(:rulename),
+      parsec(:group),
+      parsec(:option),
+      parsec(:char_val),
+      parsec(:num_val),
+      parsec(:prose_val),
+      parsec(:core_rule)
+    ])
+
+  repeat_range =
+    optional(integer(min: 1) |> unwrap_and_tag(:min))
+    |> string("*")
+    |> optional(integer(min: 1) |> unwrap_and_tag(:max))
+
+  repeat_exact = integer(min: 1) |> unwrap_and_tag(:times)
+
+  repeat_expr = choice([repeat_range, repeat_exact]) |> tag(:repeat)
+
+  repetition =
+    optional(repeat_expr)
+    |> parsec(:element)
+    |> tag(:repetition)
+    |> post_traverse({:flatten, []})
 
   concatenation =
-    ignore(space)
-    |> concat(parsec(:expr))
+    parsec(:repetition)
+    |> repeat(ignore(times(c_wsp, min: 1)) |> parsec(:repetition))
     |> tag(:concatenation)
+    |> post_traverse({:flatten, []})
 
-  alternative =
-    ignore(space)
-    |> ignore(string("/"))
-    |> ignore(space)
-    |> concat(parsec(:expr))
-    |> tag(:alternative)
+  alternation =
+    parsec(:concatenation)
+    |> repeat(
+      ignore(repeat(c_wsp) |> string("/") |> repeat(c_wsp))
+      |> parsec(:concatenation)
+    )
+    |> tag(:alternation)
+    |> post_traverse({:flatten, []})
 
-  defp not_cr_lf(<<"\r\n", _::binary>>, context, _, _), do: {:halt, context}
-  defp not_cr_lf(_, context, _, _), do: {:cont, context}
+  defp flatten(_, [{tag, [one]}], context, _, _)
+       when tag in [:repetition, :concatenation, :alternation] do
+    {[one], context}
+  end
 
-  defp binary_wrap(code), do: <<code>>
+  defp flatten(_, args, context, _, _) do
+    {args, context}
+  end
 
-  defparsec :expr,
-            times(
-              choice([
-                core_rule,
-                rule,
-                string_expr,
-                numeric_expr,
-                comment,
-                repetition_expr,
-                optional_expr,
-                group,
-                concatenation,
-                alternative,
-                ignore(string("\r\n") |> ascii_string([?\ ], min: 1))
-              ]),
-              min: 1
-            )
+  elements = parsec(:alternation) |> repeat(c_wsp)
 
-  defparsec :parse,
-            times(
-              name
-              |> ignore(space)
-              |> ignore(string("="))
-              |> ignore(space)
-              |> parsec(:expr)
-              |> ignore(times(string("\r\n"), min: 1))
-              |> tag(:definition),
-              min: 1
-            )
+  rule =
+    parsec(:rulename)
+    |> ignore(define_as)
+    |> concat(elements)
+    |> concat(c_nl)
+    |> tag(:rule)
+
+  rulelist = times(choice([rule, repeat(c_wsp) |> concat(c_nl)]), min: 1)
+
+  def parse(text) do
+    text |> normalize() |> rulelist()
+  end
 
   def parse!(text) do
     case parse(text) do
-      {:ok, syntax, "", _, _, _} -> syntax
-      {:ok, _, leftover, _, _, _} -> raise AbnfParsec.LeftoverTokenError, "Leftover: #{leftover}"
-      {:error, error, _, _, _, _} -> raise AbnfParsec.UnexpectedTokenError, error
+      {:ok, syntax, "", _, _, _} ->
+        syntax
+
+      {:ok, _, leftover, _, _, _} ->
+        raise AbnfParsec.LeftoverTokenError, "Leftover: #{leftover}"
+
+      {:error, error, _, _, _, _} ->
+        raise AbnfParsec.UnexpectedTokenError, error
     end
   end
 
-  def normalize(text) do
+  defp normalize(text) do
     text
-    |> String.split("\n", trim: true)
+    |> String.split(["\r\n", "\n"], trim: true)
     |> Enum.join("\r\n")
     |> Kernel.<>("\r\n")
   end
 
-  defparsec :rule, rule
+  defparsec :rulename, rulename
   defparsec :comment, comment
-  defparsec :repetition, repetition_expr
-  defparsec :optional, optional_expr
+  defparsec :repetition, repetition
+  defparsec :option, option
   defparsec :group, group
-  defparsec :numeric, numeric_expr
+  defparsec :num_val, num_val
   defparsec :concatenation, concatenation
-  defparsec :alternative, alternative
-  defparsec :string, string_expr
+  defparsec :alternation, alternation
+  defparsec :char_val, char_val
   defparsec :core_rule, core_rule
+  defparsec :prose_val, prose_val
+  defparsec :element, element
+  defparsec :rule, rule
+  defparsec :rulelist, rulelist
 end
