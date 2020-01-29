@@ -200,5 +200,7 @@ defmodule AbnfParsecTest do
     assert_raise AbnfParsec.LeftoverTokenError, fn ->
       AbnfParsec.parse!("a = %x1\r\nb = ?")
     end
+
+    assert AbnfParsec.parse!(File.read!("test/fixture/abnf.abnf"))
   end
 end
