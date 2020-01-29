@@ -39,6 +39,8 @@ defmodule AbnfParsecTest do
 
     assert {:ok, [repetition: [repeat: [times: 3], rulename: "abc"]], "", %{}, {1, 0}, 4} =
              AbnfParsec.repetition("3abc")
+
+    assert {:ok, [rulename: "abc"], "", %{}, {1, 0}, 3} = AbnfParsec.repetition("abc")
   end
 
   test "parse option" do
@@ -74,11 +76,15 @@ defmodule AbnfParsecTest do
   test "parse concatenation" do
     assert {:ok, [concatenation: [rulename: "a", rulename: "b"]], "", %{}, {1, 0}, 3} =
              AbnfParsec.concatenation("a b")
+
+    assert {:ok, [rulename: "a"], "", %{}, {1, 0}, 1} = AbnfParsec.concatenation("a")
   end
 
   test "parse alternation" do
     assert {:ok, [alternation: [rulename: "a", rulename: "b"]], "", %{}, {1, 0}, 5} =
              AbnfParsec.alternation("a / b")
+
+    assert {:ok, [rulename: "a"], "", %{}, {1, 0}, 1} = AbnfParsec.alternation("a")
   end
 
   test "parse element" do
