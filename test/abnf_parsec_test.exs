@@ -25,21 +25,16 @@ defmodule AbnfParsecTest do
   end
 
   test "parse repetition" do
-    assert {:ok,
-            [
-              repetition: [
-                repeat: [{:min, 1}, "*", {:max, 2}],
-                rulename: "abc"
-              ]
-            ], "", %{}, {1, 0}, 6} = AbnfParsec.repetition("1*2abc")
+    assert {:ok, [repetition: [repeat: [min: 1, max: 2], rulename: "abc"]], "", %{}, {1, 0}, 6} =
+             AbnfParsec.repetition("1*2abc")
 
-    assert {:ok, [repetition: [repeat: ["*", {:max, 2}], rulename: "abc"]], "", %{}, {1, 0}, 5} =
+    assert {:ok, [repetition: [repeat: [{:max, 2}], rulename: "abc"]], "", %{}, {1, 0}, 5} =
              AbnfParsec.repetition("*2abc")
 
-    assert {:ok, [repetition: [repeat: [{:min, 1}, "*"], rulename: "abc"]], "", %{}, {1, 0}, 5} =
+    assert {:ok, [repetition: [repeat: [{:min, 1}], rulename: "abc"]], "", %{}, {1, 0}, 5} =
              AbnfParsec.repetition("1*abc")
 
-    assert {:ok, [repetition: [repeat: ["*"], rulename: "abc"]], "", %{}, {1, 0}, 4} =
+    assert {:ok, [repetition: [repeat: [], rulename: "abc"]], "", %{}, {1, 0}, 4} =
              AbnfParsec.repetition("*abc")
 
     assert {:ok, [repetition: [repeat: [times: 3], rulename: "abc"]], "", %{}, {1, 0}, 4} =
@@ -166,7 +161,7 @@ defmodule AbnfParsecTest do
                   ],
                   num_range: [{:base, "x"}, "51", "59"],
                   repetition: [
-                    repeat: [{:min, 1}, "*", {:max, 2}],
+                    repeat: [min: 1, max: 2],
                     group: [alternation: [rulename: "b", rulename: "c"]]
                   ]
                 ]

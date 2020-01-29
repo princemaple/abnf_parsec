@@ -154,7 +154,7 @@ defmodule AbnfParsec do
 
   repeat_range =
     optional(integer(min: 1) |> unwrap_and_tag(:min))
-    |> string("*")
+    |> ignore(string("*"))
     |> optional(integer(min: 1) |> unwrap_and_tag(:max))
 
   repeat_exact = integer(min: 1) |> unwrap_and_tag(:times)
