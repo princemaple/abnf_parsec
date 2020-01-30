@@ -93,15 +93,11 @@ into
     rulename: "rulelist",
     repetition: [
       repeat: [min: 1],
-      group: [
-        alternation: [
-          rulename: "rule",
-          group: [
-            concatenation: [
-              repetition: [repeat: [], rulename: "c-wsp"],
-              rulename: "c-nl"
-            ]
-          ]
+      alternation: [
+        rulename: "rule",
+        concatenation: [
+          repetition: [repeat: [], rulename: "c-wsp"],
+          rulename: "c-nl"
         ]
       ]
     ]
@@ -123,7 +119,7 @@ into
       rulename: "ALPHA",
       repetition: [
         repeat: [],
-        group: [alternation: [{:rulename, "ALPHA"}, {:rulename, "DIGIT"}, "-"]]
+        alternation: [{:rulename, "ALPHA"}, {:rulename, "DIGIT"}, "-"]
       ]
     ]
   ],
@@ -131,7 +127,7 @@ into
     rulename: "defined-as",
     concatenation: [
       repetition: [repeat: [], rulename: "c-wsp"],
-      group: [alternation: ["=", "=/"]],
+      alternation: ["=", "=/"],
       repetition: [repeat: [], rulename: "c-wsp"]
     ],
     comment: "basic rules definition and",
@@ -148,7 +144,7 @@ into
     rulename: "c-wsp",
     alternation: [
       rulename: "WSP",
-      group: [concatenation: [rulename: "c-nl", rulename: "WSP"]]
+      concatenation: [rulename: "c-nl", rulename: "WSP"]
     ]
   ],
   rule: [
@@ -161,7 +157,7 @@ into
     concatenation: [
       ";",
       {:repetition,
-       [repeat: [], group: [alternation: [rulename: "WSP", rulename: "VCHAR"]]]},
+       [repeat: [], alternation: [rulename: "WSP", rulename: "VCHAR"]]},
       {:rulename, "CRLF"}
     ]
   ],
@@ -171,13 +167,11 @@ into
       rulename: "concatenation",
       repetition: [
         repeat: [],
-        group: [
-          concatenation: [
-            {:repetition, [repeat: [], rulename: "c-wsp"]},
-            "/",
-            {:repetition, [repeat: [], rulename: "c-wsp"]},
-            {:rulename, "concatenation"}
-          ]
+        concatenation: [
+          {:repetition, [repeat: [], rulename: "c-wsp"]},
+          "/",
+          {:repetition, [repeat: [], rulename: "c-wsp"]},
+          {:rulename, "concatenation"}
         ]
       ]
     ]
@@ -188,11 +182,9 @@ into
       rulename: "repetition",
       repetition: [
         repeat: [],
-        group: [
-          concatenation: [
-            repetition: [repeat: [min: 1], rulename: "c-wsp"],
-            rulename: "repetition"
-          ]
+        concatenation: [
+          repetition: [repeat: [min: 1], rulename: "c-wsp"],
+          rulename: "repetition"
         ]
       ]
     ]
@@ -205,12 +197,10 @@ into
     rulename: "repeat",
     alternation: [
       repetition: [repeat: [min: 1], rulename: "DIGIT"],
-      group: [
-        concatenation: [
-          {:repetition, [repeat: [], rulename: "DIGIT"]},
-          "*",
-          {:repetition, [repeat: [], rulename: "DIGIT"]}
-        ]
+      concatenation: [
+        {:repetition, [repeat: [], rulename: "DIGIT"]},
+        "*",
+        {:repetition, [repeat: [], rulename: "DIGIT"]}
       ]
     ]
   ],
@@ -251,11 +241,9 @@ into
       rulename: "DQUOTE",
       repetition: [
         repeat: [],
-        group: [
-          alternation: [
-            num_range: [{:base, "x"}, "20", "21"],
-            num_range: [{:base, "x"}, "23", "7E"]
-          ]
+        alternation: [
+          num_range: [{:base, "x"}, "20", "21"],
+          num_range: [{:base, "x"}, "23", "7E"]
         ]
       ],
       rulename: "DQUOTE"
@@ -267,14 +255,8 @@ into
     rulename: "num-val",
     concatenation: [
       "%",
-      {:group,
-       [
-         alternation: [
-           rulename: "bin-val",
-           rulename: "dec-val",
-           rulename: "hex-val"
-         ]
-       ]}
+      {:alternation,
+       [rulename: "bin-val", rulename: "dec-val", rulename: "hex-val"]}
     ]
   ],
   rule: [
@@ -287,18 +269,14 @@ into
          alternation: [
            repetition: [
              repeat: [min: 1],
-             group: [
-               concatenation: [
-                 ".",
-                 {:repetition, [repeat: [min: 1], rulename: "BIT"]}
-               ]
-             ]
-           ],
-           group: [
              concatenation: [
-               "-",
+               ".",
                {:repetition, [repeat: [min: 1], rulename: "BIT"]}
              ]
+           ],
+           concatenation: [
+             "-",
+             {:repetition, [repeat: [min: 1], rulename: "BIT"]}
            ]
          ]
        ]}
@@ -316,18 +294,14 @@ into
          alternation: [
            repetition: [
              repeat: [min: 1],
-             group: [
-               concatenation: [
-                 ".",
-                 {:repetition, [repeat: [min: 1], rulename: "DIGIT"]}
-               ]
-             ]
-           ],
-           group: [
              concatenation: [
-               "-",
+               ".",
                {:repetition, [repeat: [min: 1], rulename: "DIGIT"]}
              ]
+           ],
+           concatenation: [
+             "-",
+             {:repetition, [repeat: [min: 1], rulename: "DIGIT"]}
            ]
          ]
        ]}
@@ -343,18 +317,14 @@ into
          alternation: [
            repetition: [
              repeat: [min: 1],
-             group: [
-               concatenation: [
-                 ".",
-                 {:repetition, [repeat: [min: 1], rulename: "HEXDIG"]}
-               ]
-             ]
-           ],
-           group: [
              concatenation: [
-               "-",
+               ".",
                {:repetition, [repeat: [min: 1], rulename: "HEXDIG"]}
              ]
+           ],
+           concatenation: [
+             "-",
+             {:repetition, [repeat: [min: 1], rulename: "HEXDIG"]}
            ]
          ]
        ]}
@@ -367,11 +337,9 @@ into
       {:repetition,
        [
          repeat: [],
-         group: [
-           alternation: [
-             num_range: [{:base, "x"}, "20", "3D"],
-             num_range: [{:base, "x"}, "3F", "7E"]
-           ]
+         alternation: [
+           num_range: [{:base, "x"}, "20", "3D"],
+           num_range: [{:base, "x"}, "3F", "7E"]
          ]
        ]},
       ">"

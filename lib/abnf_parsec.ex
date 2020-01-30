@@ -125,7 +125,6 @@ defmodule AbnfParsec do
     |> concat(parsec(:alternation))
     |> ignore(repeat(c_wsp))
     |> ignore(string(")"))
-    |> tag(:group)
 
   option =
     ignore(string("["))

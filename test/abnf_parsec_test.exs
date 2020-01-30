@@ -48,7 +48,7 @@ defmodule AbnfParsecTest do
   end
 
   test "parse group" do
-    assert {:ok, [group: [rulename: "a"]], "", %{}, {1, 0}, 3} = AbnfParsec.group("(a)")
+    assert {:ok, [rulename: "a"], "", %{}, {1, 0}, 3} = AbnfParsec.group("(a)")
   end
 
   test "parse num_val" do
@@ -99,12 +99,8 @@ defmodule AbnfParsecTest do
 
     assert {:ok, [rulename: "a-b-c"], "", %{}, {1, 0}, 5} = AbnfParsec.element("a-b-c")
 
-    assert {:ok,
-            [
-              group: [
-                concatenation: [rulename: "a", rulename: "b", rulename: "c"]
-              ]
-            ], "", %{}, {1, 0}, 7} = AbnfParsec.element("(a b c)")
+    assert {:ok, [concatenation: [rulename: "a", rulename: "b", rulename: "c"]], "", %{}, {1, 0},
+            7} = AbnfParsec.element("(a b c)")
   end
 
   test "parse" do
@@ -154,11 +150,9 @@ defmodule AbnfParsecTest do
                 alternation: [
                   concatenation: [
                     rulename: "a",
-                    group: [
-                      concatenation: [
-                        repetition: [repeat: [times: 3], rulename: "b"],
-                        option: [concatenation: [rulename: "c", rulename: "d"]]
-                      ]
+                    concatenation: [
+                      repetition: [repeat: [times: 3], rulename: "b"],
+                      option: [concatenation: [rulename: "c", rulename: "d"]]
                     ]
                   ],
                   concatenation: [
@@ -168,7 +162,7 @@ defmodule AbnfParsecTest do
                   num_range: [{:base, "x"}, "51", "59"],
                   repetition: [
                     repeat: [min: 1, max: 2],
-                    group: [alternation: [rulename: "b", rulename: "c"]]
+                    alternation: [rulename: "b", rulename: "c"]
                   ]
                 ]
               ]
