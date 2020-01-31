@@ -140,8 +140,47 @@ defmodule AbnfParsecTest do
 
   test "parser module" do
     defmodule J do
-      use AbnfParsec, abnf_file: "test/fixture/json.abnf"
+      use AbnfParsec,
+        abnf_file: "test/fixture/json.abnf",
+        ignore: [
+          "name-separator",
+          "value-separator",
+          "quotation-mark",
+          "begin-object",
+          "end-object",
+          "begin-array",
+          "end-array"
+        ]
     end
+
+    assert {:ok,
+            [
+              object: [
+                member: [
+                  string: [char: [unescaped: 'a']],
+                  value: [
+                    object: [
+                      member: [
+                        string: [char: [unescaped: 'b']],
+                        value: [number: [int: [digit1_9: '1']]]
+                      ],
+                      member: [
+                        string: [char: [unescaped: 'c']],
+                        value: [array: [value: [true: ["true"]]]]
+                      ]
+                    ]
+                  ]
+                ],
+                member: [
+                  string: [char: [unescaped: 'd']],
+                  value: [null: ["null"]]
+                ]
+              ]
+            ], "", %{}, {2, 40},
+            40} =
+             J.object("""
+             {"a": {"b": 1, "c": [true]}, "d": null}
+             """)
 
     assert {:ok, _, _, _, _, _} =
              J.object("""
