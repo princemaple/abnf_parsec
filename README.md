@@ -21,9 +21,48 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/abnf_parsec](https://hexdocs.pm/abnf_parsec).
 
-### Parsing Example
+## Usage
 
-ABNF of ABNF is parsed
+```elixir
+defmodule IPv4Parser do
+  use AbnfParsec,
+    abnf: """
+    ip = dec-octet 3("." dec-octet)
+    dec-octet =
+      "25" %x30-35      /   ; 250-255
+      "2" %x30-34 DIGIT /   ; 200-249
+      "1" 2DIGIT        /   ; 100-199
+      %x31-39 DIGIT     /   ; 10-99
+      DIGIT                 ; 0-9
+    """
+end
+
+IPv4Parser.ip("127.0.0.1")
+```
+
+```elixir
+defmodule JsonParser do
+  use AbnfParsec,
+    abnf_file: "test/fixture/json.abnf",
+    ignore: [
+      "name-separator",
+      "value-separator",
+      "quotation-mark",
+      "begin-object",
+      "end-object",
+      "begin-array",
+      "end-array"
+    ]
+end
+
+JsonParser.json_text("""
+  {"a": {"b": 1, "c": [true]}, "d": null}
+  """)
+```
+
+## What does it do, really?
+
+For example, ABNF of ABNF is parsed
 
 ```
 rulelist       =  1*( rule / (*c-wsp c-nl) )
@@ -432,21 +471,7 @@ And generated parser looks like:
   defparsec(
     :char_val,
     parsec(
-      repeat(
-        parsec(:core_dquote),
-        choice([
-          (
-            a = 32
-            b = 33
-            ascii_char([a..b])
-          ),
-          (
-            a = 35
-            b = 126
-            ascii_char([a..b])
-          )
-        ])
-      ),
+      repeat(parsec(:core_dquote), choice([ascii_char([32..33]), ascii_char([35..126])])),
       :core_dquote
     )
     |> tag(:char_val)
@@ -490,25 +515,7 @@ And generated parser looks like:
   ),
   defparsec(
     :prose_val,
-    string(
-      repeat(
-        string("<"),
-        choice([
-          (
-            a = 32
-            b = 61
-            ascii_char([a..b])
-          ),
-          (
-            a = 63
-            b = 126
-            ascii_char([a..b])
-          )
-        ])
-      ),
-      ">"
-    )
+    string(repeat(string("<"), choice([ascii_char([32..61]), ascii_char([63..126])])), ">")
     |> tag(:prose_val)
   )
-]
-```
+]```
