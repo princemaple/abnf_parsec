@@ -81,7 +81,7 @@ defmodule AbnfParsec.Parser do
       case_sensitive_string_literal
     ])
 
-  number = ascii_string([?0..?9, ?A..?F], min: 1)
+  number = ascii_string([?0..?9, ?A..?F, ?a..?f], min: 1)
 
   numeric =
     ignore(string("%"))
@@ -142,13 +142,13 @@ defmodule AbnfParsec.Parser do
 
   element =
     choice([
+      parsec(:core_rule),
       parsec(:rulename),
       parsec(:group),
       parsec(:option),
       parsec(:char_val),
       parsec(:num_val),
-      parsec(:prose_val),
-      parsec(:core_rule)
+      parsec(:prose_val)
     ])
 
   repeat_range =

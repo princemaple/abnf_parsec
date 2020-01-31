@@ -137,4 +137,21 @@ defmodule AbnfParsecTest do
               ]
             ], "", %{}, {1, 0}, 14} = T.complex("ABBBABBB CDDDD")
   end
+
+  test "parser module" do
+    defmodule J do
+      use AbnfParsec, abnf_file: "test/fixture/json.abnf"
+    end
+
+    assert {:ok, _, _, _, _, _} =
+             J.object("""
+             {
+               "data": [
+                 {"name": "Jane", "age": 45, "role": "teacher", "married": true},
+                 {"name": "John", "age": 12, "role": "student",
+                  "classes": ["math", "english", "PE"], "graduated_at": null, "extra": {}}
+               ]
+             }
+             """)
+  end
 end

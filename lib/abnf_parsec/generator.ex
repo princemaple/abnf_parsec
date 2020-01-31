@@ -1,22 +1,22 @@
 defmodule AbnfParsec.Generator do
   core_parsecs =
     quote do
-      defparsecp :alpha, ascii_char([?A..?Z, ?a..?z])
-      defparsecp :bit, ascii_char([?0, ?1])
-      defparsecp :char, ascii_char([0x01..0x7F])
-      defparsecp :cr, ascii_char([?\r])
-      defparsecp :crlf, string("\r\n")
-      defparsecp :ctl, ascii_char([0x00..0x1F])
-      defparsecp :digit, ascii_char([0x30..0x39])
-      defparsecp :dquote, string("\"")
-      defparsecp :hexdig, ascii_char([0x30..0x39, ?A, ?B, ?C, ?D, ?E, ?F])
-      defparsecp :htab, string("\t")
-      defparsecp :lf, string("\n")
-      defparsecp :lwsp, repeat(optional(string("\r\n")) |> ascii_char([?\ , ?\t]))
-      defparsecp :octet, ascii_char([0x00..0xFF])
-      defparsecp :sp, string(" ")
-      defparsecp :vchar, ascii_char([0x21..0x7E])
-      defparsecp :wsp, ascii_char([?\ , ?\t])
+      defparsecp :core_alpha, ascii_char([?A..?Z, ?a..?z])
+      defparsecp :core_bit, ascii_char([?0, ?1])
+      defparsecp :core_char, ascii_char([0x01..0x7F])
+      defparsecp :core_cr, ascii_char([?\r])
+      defparsecp :core_crlf, string("\r\n")
+      defparsecp :core_ctl, ascii_char([0x00..0x1F])
+      defparsecp :core_digit, ascii_char([0x30..0x39])
+      defparsecp :core_dquote, string("\"")
+      defparsecp :core_hexdig, ascii_char([0x30..0x39, ?A, ?B, ?C, ?D, ?E, ?F])
+      defparsecp :core_htab, string("\t")
+      defparsecp :core_lf, string("\n")
+      defparsecp :core_lwsp, repeat(optional(string("\r\n")) |> ascii_char([?\ , ?\t]))
+      defparsecp :core_octet, ascii_char([0x00..0xFF])
+      defparsecp :core_sp, string(" ")
+      defparsecp :core_vchar, ascii_char([0x21..0x7E])
+      defparsecp :core_wsp, ascii_char([?\ , ?\t])
     end
 
   @core core_parsecs
@@ -54,6 +54,14 @@ defmodule AbnfParsec.Generator do
 
   defp expand({:rulename, rulename}) do
     parsec_name = normalize_rulename(rulename)
+
+    quote do
+      parsec(unquote(parsec_name))
+    end
+  end
+
+  defp expand({:core, core_rule}) do
+    parsec_name = normalize_rulename("core-" <> core_rule)
 
     quote do
       parsec(unquote(parsec_name))
@@ -131,7 +139,9 @@ defmodule AbnfParsec.Generator do
   end
 
   defp expand({:option, element}) do
-    quote do optional(unquote(expand(element))) end
+    quote do
+      optional(unquote(expand(element)))
+    end
   end
 
   defp normalize_rulename(rulename) do

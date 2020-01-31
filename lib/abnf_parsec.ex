@@ -2,7 +2,12 @@ defmodule AbnfParsec do
   alias AbnfParsec.{Parser, Generator}
 
   defmacro __using__(opts) do
-    abnf = Keyword.fetch!(opts, :abnf)
+    abnf =
+      case Keyword.fetch(opts, :abnf_file) do
+        {:ok, filepath} -> File.read!(filepath)
+        :error -> Keyword.fetch!(opts, :abnf)
+      end
+
     debug? = Keyword.get(opts, :debug, false)
 
     code =
