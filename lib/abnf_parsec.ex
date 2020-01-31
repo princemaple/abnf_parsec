@@ -10,6 +10,8 @@ defmodule AbnfParsec do
 
     debug? = Keyword.get(opts, :debug, false)
 
+    parse = Keyword.get(opts, :parse)
+
     code =
       abnf
       |> Parser.parse!()
@@ -28,6 +30,25 @@ defmodule AbnfParsec do
       unquote(Generator.core())
 
       unquote(code)
+
+      if unquote(parse) do
+        def parse(text) do
+          text |> unquote({parse, [], []})
+        end
+
+        def parse!(text) do
+          case parse(text) do
+            {:ok, syntax, "", _, _, _} ->
+              syntax
+
+            {:ok, _, leftover, _, _, _} ->
+              raise AbnfParsec.LeftoverTokenError, "Leftover: #{leftover}"
+
+            {:error, error, _, _, _, _} ->
+              raise AbnfParsec.UnexpectedTokenError, error
+          end
+        end
+      end
     end
   end
 end

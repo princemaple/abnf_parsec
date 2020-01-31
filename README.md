@@ -34,10 +34,14 @@ defmodule IPv4Parser do
       "1" 2DIGIT        /   ; 100-199
       %x31-39 DIGIT     /   ; 10-99
       DIGIT                 ; 0-9
-    """
+    """,
+    parse: :ip
 end
 
-IPv4Parser.ip("127.0.0.1")
+IPv4Parser.ip("192.168.0.1")
+# or
+IPv4Parser.parse("127.0.0.1")
+IPv4Parser.parse!("127.0.0.1")
 ```
 
 ```elixir
@@ -52,12 +56,18 @@ defmodule JsonParser do
       "end-object",
       "begin-array",
       "end-array"
-    ]
+    ],
+    parse: :json_text
 end
 
-JsonParser.json_text("""
+json = """
   {"a": {"b": 1, "c": [true]}, "d": null}
-  """)
+  """
+
+JsonParser.json_text(json)
+# or
+JsonParser.parse(json)
+JsonParser.parse!(json)
 ```
 
 ## What does it do, really?

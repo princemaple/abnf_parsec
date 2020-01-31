@@ -218,7 +218,7 @@ defmodule AbnfParsec.Parser do
     end
   end
 
-  defp normalize(text) do
+  def normalize(text) do
     text
     |> String.split(["\r\n", "\n"], trim: true)
     |> Enum.join("\r\n")
