@@ -1,6 +1,8 @@
 # AbnfParsec
 
-**TODO: Add description**
+Input ABNF and output parser.
+
+Parses ABNF with a parser written with `nimble_parsec`, emits parser consists of `nimble_parsec` combinators.
 
 ## Installation
 
