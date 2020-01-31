@@ -93,8 +93,8 @@ defmodule AbnfParsec.Generator do
     a = base_num(a, base)
     b = base_num(b, base)
 
-    quote bind_quoted: [a: a, b: b] do
-      ascii_char([a..b])
+    quote do
+      ascii_char([unquote(a)..unquote(b)])
     end
   end
 
@@ -109,15 +109,11 @@ defmodule AbnfParsec.Generator do
   defp expand({:concatenation, elements}) do
     elements
     |> Enum.map(&expand/1)
-    |> Enum.map(&Macro.expand(&1, __ENV__))
     |> Enum.reduce(&Macro.pipe(&2, &1, 0))
   end
 
   defp expand({:alternation, elements}) do
-    alternations =
-      elements
-      |> Enum.map(&expand/1)
-      |> Enum.map(&Macro.expand(&1, __ENV__))
+    alternations = Enum.map(elements, &expand/1)
 
     quote do
       choice([unquote_splicing(alternations)])
