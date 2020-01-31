@@ -1,6 +1,5 @@
 defmodule AbnfParsec.ParserTest do
   use ExUnit.Case
-  doctest AbnfParsec
 
   alias AbnfParsec.Parser
 

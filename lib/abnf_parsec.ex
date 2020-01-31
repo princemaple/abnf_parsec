@@ -1,9 +1,28 @@
 defmodule AbnfParsec do
-  def parse(text) do
-    AbnfParsec.Parser.parse(text)
-  end
+  alias AbnfParsec.{Parser, Generator}
 
-  def parse!(text) do
-    AbnfParsec.Parser.parse!(text)
+  defmacro __using__(opts) do
+    abnf = Keyword.fetch!(opts, :abnf)
+    debug? = Keyword.get(opts, :debug, false)
+
+    code =
+      abnf
+      |> Parser.parse!()
+      |> Generator.generate()
+
+    if debug? do
+      code
+      |> Macro.to_string()
+      |> Code.format_string!()
+      |> IO.puts()
+    end
+
+    quote do
+      import NimbleParsec
+
+      unquote(Generator.core())
+
+      unquote(code)
+    end
   end
 end
