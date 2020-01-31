@@ -25,19 +25,26 @@ defmodule AbnfParsec.Generator do
     @core
   end
 
-  def generate(rulelist) do
+  def generate(rulelist, opts) do
     for {:rule, [{:rulename, rulename} | definition]} <- rulelist do
-      define(rulename, definition)
+      define(rulename, definition, opts)
     end
   end
 
-  defp define(rulename, definition) when is_binary(rulename) do
+  defp define(rulename, definition, opts) do
     parsec_name = normalize_rulename(rulename)
     definition = expand(definition)
 
-    quote do
-      defparsec unquote(parsec_name),
-                unquote(definition) |> tag(unquote(parsec_name))
+    if rulename in Map.get(opts, :ignore, []) do
+      quote do
+        defparsecp unquote(parsec_name),
+                   unquote(definition) |> ignore()
+      end
+    else
+      quote do
+        defparsec unquote(parsec_name),
+                  unquote(definition) |> tag(unquote(parsec_name))
+      end
     end
   end
 

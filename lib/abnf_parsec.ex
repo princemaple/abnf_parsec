@@ -13,7 +13,7 @@ defmodule AbnfParsec do
     code =
       abnf
       |> Parser.parse!()
-      |> Generator.generate()
+      |> Generator.generate(Enum.into(opts, %{}))
 
     if debug? do
       code
