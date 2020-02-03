@@ -145,12 +145,25 @@ defmodule AbnfParsecTest do
         parse: :json_text,
         transform: %{
           "string" => {:reduce, {List, :to_string, []}},
-          "int" => {:reduce, {List, :to_string, []}},
-          "frac" => {:reduce, {List, :to_string, []}}
+          "int" => [{:reduce, {List, :to_string, []}}, {:map, {String, :to_integer, []}}],
+          "frac" => {:reduce, {List, :to_string, []}},
+          "null" => {:replace, nil},
+          "true" => {:replace, true},
+          "false" => {:replace, false}
         },
         untag: ["member"],
-        unwrap: ["null", "true", "false", "int", "frac"],
-        unbox: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
+        unwrap: ["int", "frac"],
+        unbox: [
+          "JSON-text",
+          "null",
+          "true",
+          "false",
+          "digit1-9",
+          "decimal-point",
+          "escape",
+          "unescaped",
+          "char"
+        ],
         ignore: [
           "name-separator",
           "value-separator",
@@ -169,12 +182,12 @@ defmodule AbnfParsecTest do
                   string: ["a"],
                   value: [
                     object: [
-                      [string: ["b"], value: [number: [int: "1", frac: ".2"]]],
-                      [string: ["c"], value: [array: [value: [true: "true"]]]]
+                      [string: ["b"], value: [number: [int: 1, frac: ".2"]]],
+                      [string: ["c"], value: [array: [value: [true]]]]
                     ]
                   ]
                 ],
-                [string: ["d"], value: [null: "null"]],
+                [string: ["d"], value: [nil]],
                 [string: ["e"], value: [string: ["e\\te"]]]
               ]
             ], "", %{}, {2, 55},

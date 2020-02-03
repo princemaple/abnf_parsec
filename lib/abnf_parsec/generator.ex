@@ -35,20 +35,7 @@ defmodule AbnfParsec.Generator do
     parsec_name = normalize_rulename(rulename)
     definition = expand(definition)
 
-    definition =
-      case get_in(opts, [:transform, rulename]) do
-        {:reduce, mfa} ->
-          Macro.pipe(definition, quote(do: reduce(unquote(Macro.escape(mfa)))), 0)
-
-        {:map, mfa} ->
-          Macro.pipe(definition, quote(do: map(unquote(Macro.escape(mfa)))), 0)
-
-        {:replace, val} ->
-          Macro.pipe(definition, quote(do: replace(unquote(Macro.escape(val)))), 0)
-
-        _ ->
-          definition
-      end
+    definition = transform(definition, get_in(opts, [:transform, rulename]))
 
     definition =
       cond do
@@ -70,6 +57,30 @@ defmodule AbnfParsec.Generator do
 
     quote do
       defparsec unquote(parsec_name), unquote(definition)
+    end
+  end
+
+  defp transform(definition, []) do
+    definition
+  end
+
+  defp transform(definition, [transformation | more]) do
+    definition |> transform(transformation) |> transform(more)
+  end
+
+  defp transform(definition, transformation) do
+    case transformation do
+      {:reduce, mfa} ->
+        Macro.pipe(definition, quote(do: reduce(unquote(Macro.escape(mfa)))), 0)
+
+      {:map, mfa} ->
+        Macro.pipe(definition, quote(do: map(unquote(Macro.escape(mfa)))), 0)
+
+      {:replace, val} ->
+        Macro.pipe(definition, quote(do: replace(unquote(Macro.escape(val)))), 0)
+
+      nil ->
+        definition
     end
   end
 
