@@ -142,7 +142,8 @@ defmodule AbnfParsecTest do
     defmodule J do
       use AbnfParsec,
         abnf_file: "test/fixture/json.abnf",
-        ignore: [
+        parse: :json_text,
+        ignored: [
           "name-separator",
           "value-separator",
           "quotation-mark",
@@ -150,31 +151,31 @@ defmodule AbnfParsecTest do
           "end-object",
           "begin-array",
           "end-array"
-        ]
+        ],
+        untagged: ["member"],
+        unwrapped: ["null", "true", "false"],
+        unboxed: ["JSON-text", "digit1-9", "decimal-point"]
     end
 
     assert {:ok,
             [
               object: [
-                member: [
+                [
                   string: [char: [unescaped: 'a']],
                   value: [
                     object: [
-                      member: [
+                      [
                         string: [char: [unescaped: 'b']],
-                        value: [number: [int: [digit1_9: '1']]]
+                        value: [number: [int: '1']]
                       ],
-                      member: [
+                      [
                         string: [char: [unescaped: 'c']],
-                        value: [array: [value: [true: ["true"]]]]
+                        value: [array: [value: [true: "true"]]]
                       ]
                     ]
                   ]
                 ],
-                member: [
-                  string: [char: [unescaped: 'd']],
-                  value: [null: ["null"]]
-                ]
+                [string: [char: [unescaped: 'd']], value: [null: "null"]]
               ]
             ], "", %{}, {2, 40},
             40} =

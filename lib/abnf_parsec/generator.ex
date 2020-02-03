@@ -35,16 +35,26 @@ defmodule AbnfParsec.Generator do
     parsec_name = normalize_rulename(rulename)
     definition = expand(definition)
 
-    if rulename in Map.get(opts, :ignore, []) do
-      quote do
-        defparsecp unquote(parsec_name),
-                   unquote(definition) |> ignore()
+    definition =
+      cond do
+        rulename in Map.get(opts, :ignored, []) ->
+          Macro.pipe(definition, quote(do: ignore()), 0)
+
+        rulename in Map.get(opts, :unwrapped, []) ->
+          Macro.pipe(definition, quote(do: unwrap_and_tag(unquote(parsec_name))), 0)
+
+        rulename in Map.get(opts, :untagged, []) ->
+          Macro.pipe(definition, quote(do: wrap()), 0)
+
+        rulename in Map.get(opts, :unboxed, []) ->
+          definition
+
+        true ->
+          Macro.pipe(definition, quote(do: tag(unquote(parsec_name))), 0)
       end
-    else
-      quote do
-        defparsec unquote(parsec_name),
-                  unquote(definition) |> tag(unquote(parsec_name))
-      end
+
+    quote do
+      defparsec unquote(parsec_name), unquote(definition)
     end
   end
 
