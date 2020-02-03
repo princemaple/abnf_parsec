@@ -2,12 +2,24 @@ defmodule AbnfParsec do
   alias AbnfParsec.{Parser, Generator}
 
   @doc """
+  Generates a parser from ABNF definition.
+
+  An entry rule can be defined by `:parse`, and a `parse/1` function and a
+  `parse!/1` function will be generated with the entry rule.
+
+  By default, every chunk defined by a rule is wrapped and tagged by the rule
+  name. Use the options to untag (untagged), unwrap (:unwrapped) or both
+  (:unboxed). Parsed chunks (rules) can be discarded (:ignored).
+
   Example usage:
 
       defmodule JsonParser do
         use AbnfParsec,
           abnf_file: "test/fixture/json.abnf",
           parse: :json_text,
+          untagged: ["member"],
+          unwrapped: ["null", "true", "false"],
+          unboxed: ["JSON-text", "digit1-9", "decimal-point"],
           ignored: [
             "name-separator",
             "value-separator",
@@ -16,10 +28,7 @@ defmodule AbnfParsec do
             "end-object",
             "begin-array",
             "end-array"
-          ],
-          untagged: ["member"],
-          unwrapped: ["null", "true", "false"],
-          unboxed: ["JSON-text", "digit1-9", "decimal-point"]
+          ]
       end
   """
   defmacro __using__(opts) do

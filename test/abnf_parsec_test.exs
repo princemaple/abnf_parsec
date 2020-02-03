@@ -143,6 +143,9 @@ defmodule AbnfParsecTest do
       use AbnfParsec,
         abnf_file: "test/fixture/json.abnf",
         parse: :json_text,
+        untagged: ["member"],
+        unwrapped: ["null", "true", "false"],
+        unboxed: ["JSON-text", "digit1-9", "decimal-point"],
         ignored: [
           "name-separator",
           "value-separator",
@@ -151,10 +154,7 @@ defmodule AbnfParsecTest do
           "end-object",
           "begin-array",
           "end-array"
-        ],
-        untagged: ["member"],
-        unwrapped: ["null", "true", "false"],
-        unboxed: ["JSON-text", "digit1-9", "decimal-point"]
+        ]
     end
 
     assert {:ok,
