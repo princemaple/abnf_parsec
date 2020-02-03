@@ -149,7 +149,7 @@ defmodule AbnfParsecTest do
           "frac" => {:reduce, {List, :to_string, []}}
         },
         untag: ["member"],
-        unwrap: ["null", "true", "false"],
+        unwrap: ["null", "true", "false", "int", "frac"],
         unbox: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
         ignore: [
           "name-separator",
@@ -169,7 +169,7 @@ defmodule AbnfParsecTest do
                   string: ["a"],
                   value: [
                     object: [
-                      [string: ["b"], value: [number: [int: ["1"]]]],
+                      [string: ["b"], value: [number: [int: "1", frac: ".2"]]],
                       [string: ["c"], value: [array: [value: [true: "true"]]]]
                     ]
                   ]
@@ -177,10 +177,10 @@ defmodule AbnfParsecTest do
                 [string: ["d"], value: [null: "null"]],
                 [string: ["e"], value: [string: ["e\\te"]]]
               ]
-            ], "", %{}, {2, 53},
-            53} =
+            ], "", %{}, {2, 55},
+            55} =
              J.object("""
-             {"a": {"b": 1, "c": [true]}, "d": null, "e": "e\\te"}
+             {"a": {"b": 1.2, "c": [true]}, "d": null, "e": "e\\te"}
              """)
 
     assert {:ok, _, _, _, _, _} =
