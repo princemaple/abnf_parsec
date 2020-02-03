@@ -2,14 +2,14 @@ defmodule AbnfParsec do
   alias AbnfParsec.{Parser, Generator}
 
   @doc """
-  Generates a parser from ABNF definition.
+  Generates a parser from ABNF definition - text (`:abnf`) or file path (`:abnf_file`)
 
-  An entry rule can be defined by `:parse`, and a `parse/1` function and a
+  An entry rule can be defined by `:parse`. If defined, a `parse/1` function and a
   `parse!/1` function will be generated with the entry rule.
 
-  By default, every chunk defined by a rule is wrapped and tagged by the rule
-  name. Use the options to untag (untagged), unwrap (:unwrapped) or both
-  (:unboxed). Parsed chunks (rules) can be discarded (:ignored).
+  By default, every chunk defined by a rule is wrapped (in list) and tagged by the rule
+  name. Use the options to untag (`:untagged`), unwrap (`:unwrapped`) or both
+  (`:unboxed`). Parsed chunks (rules) can be discarded (`:ignored`).
 
   Example usage:
 
@@ -19,7 +19,7 @@ defmodule AbnfParsec do
           parse: :json_text,
           untagged: ["member"],
           unwrapped: ["null", "true", "false"],
-          unboxed: ["JSON-text", "digit1-9", "decimal-point"],
+          unboxed: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
           ignored: [
             "name-separator",
             "value-separator",
@@ -30,6 +30,30 @@ defmodule AbnfParsec do
             "end-array"
           ]
       end
+
+      json = ~s| {"a": {"b": 1, "c": [true]}, "d": null, "e": "e\\te"} |
+
+      JsonParser.json_text(json)
+      # or
+      JsonParser.parse(json)
+      # => {:ok, ...}
+      JsonParser.parse!(json)
+      # =>
+      [
+        object: [
+          [
+            string: 'a',
+            value: [
+              object: [
+                [string: 'b', value: [number: [int: '1']]],
+                [string: 'c', value: [array: [value: [true: "true"]]]]
+              ]
+            ]
+          ],
+          [string: 'd', value: [null: "null"]],
+          [string: 'e', value: [string: 'e\\te']]
+        ]
+      ]
   """
   defmacro __using__(opts) do
     abnf =

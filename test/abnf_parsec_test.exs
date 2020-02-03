@@ -145,7 +145,7 @@ defmodule AbnfParsecTest do
         parse: :json_text,
         untagged: ["member"],
         unwrapped: ["null", "true", "false"],
-        unboxed: ["JSON-text", "digit1-9", "decimal-point"],
+        unboxed: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
         ignored: [
           "name-separator",
           "value-separator",
@@ -161,26 +161,21 @@ defmodule AbnfParsecTest do
             [
               object: [
                 [
-                  string: [char: [unescaped: 'a']],
+                  string: 'a',
                   value: [
                     object: [
-                      [
-                        string: [char: [unescaped: 'b']],
-                        value: [number: [int: '1']]
-                      ],
-                      [
-                        string: [char: [unescaped: 'c']],
-                        value: [array: [value: [true: "true"]]]
-                      ]
+                      [string: 'b', value: [number: [int: '1']]],
+                      [string: 'c', value: [array: [value: [true: "true"]]]]
                     ]
                   ]
                 ],
-                [string: [char: [unescaped: 'd']], value: [null: "null"]]
+                [string: 'd', value: [null: "null"]],
+                [string: 'e', value: [string: 'e\\te']]
               ]
-            ], "", %{}, {2, 40},
-            40} =
+            ], "", %{}, {2, 53},
+            53} =
              J.object("""
-             {"a": {"b": 1, "c": [true]}, "d": null}
+             {"a": {"b": 1, "c": [true]}, "d": null, "e": "e\\te"}
              """)
 
     assert {:ok, _, _, _, _, _} =
