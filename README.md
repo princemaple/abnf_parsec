@@ -61,7 +61,7 @@ defmodule JsonParser do
 end
 
 json = """
-  {"a": {"b": 1, "c": [true]}, "d": null}
+  {"a": {"b": 1, "c": [true]}, "d": null, "e": "e\\te"}
   """
 
 JsonParser.json_text(json)
