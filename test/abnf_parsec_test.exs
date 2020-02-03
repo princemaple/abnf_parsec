@@ -143,10 +143,15 @@ defmodule AbnfParsecTest do
       use AbnfParsec,
         abnf_file: "test/fixture/json.abnf",
         parse: :json_text,
-        untagged: ["member"],
-        unwrapped: ["null", "true", "false"],
-        unboxed: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
-        ignored: [
+        transform: %{
+          "string" => {:reduce, {List, :to_string, []}},
+          "int" => {:reduce, {List, :to_string, []}},
+          "frac" => {:reduce, {List, :to_string, []}}
+        },
+        untag: ["member"],
+        unwrap: ["null", "true", "false"],
+        unbox: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
+        ignore: [
           "name-separator",
           "value-separator",
           "quotation-mark",
@@ -161,16 +166,16 @@ defmodule AbnfParsecTest do
             [
               object: [
                 [
-                  string: 'a',
+                  string: ["a"],
                   value: [
                     object: [
-                      [string: 'b', value: [number: [int: '1']]],
-                      [string: 'c', value: [array: [value: [true: "true"]]]]
+                      [string: ["b"], value: [number: [int: ["1"]]]],
+                      [string: ["c"], value: [array: [value: [true: "true"]]]]
                     ]
                   ]
                 ],
-                [string: 'd', value: [null: "null"]],
-                [string: 'e', value: [string: 'e\\te']]
+                [string: ["d"], value: [null: "null"]],
+                [string: ["e"], value: [string: ["e\\te"]]]
               ]
             ], "", %{}, {2, 53},
             53} =

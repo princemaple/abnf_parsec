@@ -8,8 +8,9 @@ defmodule AbnfParsec do
   `parse!/1` function will be generated with the entry rule.
 
   By default, every chunk defined by a rule is wrapped (in list) and tagged by the rule
-  name. Use the options to untag (`:untagged`), unwrap (`:unwrapped`) or both
-  (`:unboxed`). Parsed chunks (rules) can be discarded (`:ignored`).
+  name. Use the options to `:untag`, `:unwrap` or both (`:unbox`).
+
+  Parsed chunks (rules) can be discarded `:ignore`.
 
   Example usage:
 
@@ -17,10 +18,15 @@ defmodule AbnfParsec do
         use AbnfParsec,
           abnf_file: "test/fixture/json.abnf",
           parse: :json_text,
-          untagged: ["member"],
-          unwrapped: ["null", "true", "false"],
-          unboxed: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
-          ignored: [
+          transform: %{
+            "string" => {:reduce, {List, :to_string, []}},
+            "int" => {:reduce, {List, :to_string, []}},
+            "frac" => {:reduce, {List, :to_string, []}}
+          },
+          untag: ["member"],
+          unwrap: ["null", "true", "false"],
+          unbox: ["JSON-text", "digit1-9", "decimal-point", "escape", "unescaped", "char"],
+          ignore: [
             "name-separator",
             "value-separator",
             "quotation-mark",
@@ -66,10 +72,15 @@ defmodule AbnfParsec do
 
     parse = Keyword.get(opts, :parse)
 
+    opts =
+      opts
+      |> Enum.into(%{})
+      |> Map.update(:transform, %{}, &elem(Code.eval_quoted(&1), 0))
+
     code =
       abnf
       |> Parser.parse!()
-      |> Generator.generate(Enum.into(opts, %{}))
+      |> Generator.generate(opts)
 
     if debug? do
       code

@@ -36,17 +36,32 @@ defmodule AbnfParsec.Generator do
     definition = expand(definition)
 
     definition =
+      case get_in(opts, [:transform, rulename]) do
+        {:reduce, mfa} ->
+          Macro.pipe(definition, quote(do: reduce(unquote(Macro.escape(mfa)))), 0)
+
+        {:map, mfa} ->
+          Macro.pipe(definition, quote(do: map(unquote(Macro.escape(mfa)))), 0)
+
+        {:replace, val} ->
+          Macro.pipe(definition, quote(do: replace(unquote(Macro.escape(val)))), 0)
+
+        _ ->
+          definition
+      end
+
+    definition =
       cond do
-        rulename in Map.get(opts, :ignored, []) ->
+        rulename in Map.get(opts, :ignore, []) ->
           Macro.pipe(definition, quote(do: ignore()), 0)
 
-        rulename in Map.get(opts, :unwrapped, []) ->
+        rulename in Map.get(opts, :unwrap, []) ->
           Macro.pipe(definition, quote(do: unwrap_and_tag(unquote(parsec_name))), 0)
 
-        rulename in Map.get(opts, :untagged, []) ->
+        rulename in Map.get(opts, :untag, []) ->
           Macro.pipe(definition, quote(do: wrap()), 0)
 
-        rulename in Map.get(opts, :unboxed, []) ->
+        rulename in Map.get(opts, :unbox, []) ->
           definition
 
         true ->

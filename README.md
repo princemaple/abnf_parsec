@@ -49,7 +49,7 @@ defmodule JsonParser do
   use AbnfParsec,
     abnf_file: "test/fixture/json.abnf",
     parse: :json_text,
-    ignored: [
+    ignore: [
       "name-separator",
       "value-separator",
       "quotation-mark",
