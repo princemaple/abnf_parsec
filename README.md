@@ -48,7 +48,8 @@ IPv4Parser.parse!("127.0.0.1")
 defmodule JsonParser do
   use AbnfParsec,
     abnf_file: "test/fixture/json.abnf",
-    ignore: [
+    parse: :json_text,
+    ignored: [
       "name-separator",
       "value-separator",
       "quotation-mark",
@@ -56,8 +57,7 @@ defmodule JsonParser do
       "end-object",
       "begin-array",
       "end-array"
-    ],
-    parse: :json_text
+    ]
 end
 
 json = """
@@ -69,6 +69,8 @@ JsonParser.json_text(json)
 JsonParser.parse(json)
 JsonParser.parse!(json)
 ```
+
+For more details of options for customization, see [abnf_parsec.ex](https://github.com/princemaple/abnf_parsec/blob/master/lib/abnf_parsec.ex)
 
 ## What does it do, really?
 
