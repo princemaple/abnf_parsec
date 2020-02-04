@@ -201,6 +201,12 @@ defmodule AbnfParsec.Generator do
     end
   end
 
+  defp expand({:prose_val, _}) do
+    quote do
+      ascii_string([{:not, ?\r}, {:not, ?\n}], min: 0)
+    end
+  end
+
   # Extension: Used in RFC3501
 
   defp expand({:exception, [range | exceptions]}) do
