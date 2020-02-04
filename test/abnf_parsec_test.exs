@@ -16,6 +16,7 @@ defmodule AbnfParsecTest do
       concat-a-a-1 = %x41 %x41
       concat-a-a-2 = a-num-literal a-num-literal
       concat-range-sequence = abc-num-range a-e-x-num-sequence
+      concat-concat = ("x" "x") ("x" "x")
       a-or-b = %x41 / %x42
       three-a = 3%x41
       zero-or-more-a = *%x41
@@ -83,6 +84,9 @@ defmodule AbnfParsecTest do
                 a_e_x_num_sequence: ["AEX"]
               ]
             ], "", %{}, {1, 0}, 4} = T.concat_range_sequence("BAEX")
+
+    assert {:ok, [concat_concat: ["x", "x", "x", "x"]], "", %{}, {1, 0}, 4} =
+             T.concat_concat("xxxx")
   end
 
   test "alternation" do

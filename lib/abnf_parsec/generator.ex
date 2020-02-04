@@ -102,6 +102,12 @@ defmodule AbnfParsec.Generator do
     )
   end
 
+  defp pipe(a, b) do
+    quote do
+      unquote(a) |> unquote(b)
+    end
+  end
+
   defp expand(list) when is_list(list) do
     [element] =
       list
@@ -163,7 +169,16 @@ defmodule AbnfParsec.Generator do
   defp expand({:concatenation, elements}) do
     elements
     |> Enum.map(&expand/1)
-    |> Enum.reduce(&Macro.pipe(&2, &1, 0))
+    |> Enum.reduce(fn
+      {:|>, _, _} = b, a ->
+        Enum.reduce(
+          [a | b |> Macro.unpipe() |> Enum.map(&elem(&1, 0))],
+          &pipe(&2, &1)
+        )
+
+      b, a ->
+        pipe(a, b)
+    end)
   end
 
   defp expand({:alternation, elements}) do
@@ -217,7 +232,8 @@ defmodule AbnfParsec.Generator do
       case except do
         [except] ->
           except
-        [_|_] ->
+
+        [_ | _] ->
           quote do
             choice(unquote(except))
           end
