@@ -28,6 +28,8 @@ defmodule AbnfParsecTest do
         ; multi line comment
         ; multi line comment
       a-optional-b = %x41 [%x42]
+      my-c = "C"
+      ALPHA-except-A-B-C = 1*<any ALPHA except "A" and %x42 and my-c>
 
       part-1 = *2(%x41 [3"B"])
       complex = part-1 SP part-2; do not blow up
@@ -116,6 +118,17 @@ defmodule AbnfParsecTest do
   test "option" do
     assert {:ok, [a_optional_b: 'AB'], "", %{}, {1, 0}, 2} = T.a_optional_b("AB")
     assert {:ok, [a_optional_b: 'A'], "", %{}, {1, 0}, 1} = T.a_optional_b("A")
+  end
+
+  test "except" do
+    assert {:ok, [alpha_except_a_b_c: 'DEFXYZ'], "", %{}, {1, 0}, 6} =
+             T.alpha_except_a_b_c("DEFXYZ")
+
+    assert {:error, "did not expect string \"A\" or byte equal to ?B or my_c", "A", %{}, {1, 0},
+            0} = T.alpha_except_a_b_c("A")
+
+    assert {:error, _, "B", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("B")
+    assert {:error, _, "C", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("C")
   end
 
   test "generate" do

@@ -84,6 +84,24 @@ defmodule AbnfParsec.Generator do
     end
   end
 
+  defp normalize_rulename(rulename) do
+    rulename
+    |> String.downcase()
+    |> String.replace("-", "_")
+    |> String.to_atom()
+  end
+
+  defp base_num(num, base) do
+    String.to_integer(
+      num,
+      case base do
+        "x" -> 16
+        "d" -> 10
+        "b" -> 2
+      end
+    )
+  end
+
   defp expand(list) when is_list(list) do
     [element] =
       list
@@ -152,7 +170,7 @@ defmodule AbnfParsec.Generator do
     alternations = Enum.map(elements, &expand/1)
 
     quote do
-      choice([unquote_splicing(alternations)])
+      choice(unquote(alternations))
     end
   end
 
@@ -183,21 +201,14 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp normalize_rulename(rulename) do
-    rulename
-    |> String.downcase()
-    |> String.replace("-", "_")
-    |> String.to_atom()
-  end
+  # Extension: Used in RFC3501
 
-  defp base_num(num, base) do
-    String.to_integer(
-      num,
-      case base do
-        "x" -> 16
-        "d" -> 10
-        "b" -> 2
-      end
-    )
+  defp expand({:exception, [range | exceptions]}) do
+    except = Enum.map(exceptions, &expand/1)
+    proceed = expand(range)
+
+    quote do
+      lookahead_not(choice(unquote(except))) |> unquote(proceed)
+    end
   end
 end
