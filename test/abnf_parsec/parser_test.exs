@@ -9,6 +9,10 @@ defmodule AbnfParsec.ParserTest do
     |> Enum.each(fn rule ->
       assert {:ok, [core: ^rule], "", %{}, {1, 0}, _} = Parser.core_rule(rule)
     end)
+
+    assert {:error, _, _, _, _, _} = Parser.core_rule("CHAR8")
+    assert {:error, _, _, _, _, _} = Parser.core_rule("ALPHA-")
+    assert {:error, _, _, _, _, _} = Parser.core_rule("DIGITTT")
   end
 
   test "parse comment" do

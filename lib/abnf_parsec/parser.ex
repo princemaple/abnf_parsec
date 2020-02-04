@@ -22,6 +22,8 @@ defmodule AbnfParsec.Parser do
   lf = string("LF") |> unwrap_and_tag(:core)
   bit = string("BIT") |> unwrap_and_tag(:core)
 
+  rulename_tail = ascii_char([?0..?9, ?a..?z, ?A..?Z, ?-])
+
   core_rule =
     choice([
       alpha,
@@ -41,6 +43,7 @@ defmodule AbnfParsec.Parser do
       lf,
       bit
     ])
+    |> lookahead_not(rulename_tail)
 
   help_space = ascii_string([?\ , ?\t], min: 1)
 
@@ -106,7 +109,7 @@ defmodule AbnfParsec.Parser do
 
   rulename =
     ascii_char([?a..?z, ?A..?Z])
-    |> repeat(ascii_char([?a..?z, ?A..?Z, ?0..?9, ?-]))
+    |> repeat(rulename_tail)
     |> reduce({List, :to_string, []})
     |> unwrap_and_tag(:rulename)
 
