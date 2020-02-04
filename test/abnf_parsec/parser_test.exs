@@ -80,6 +80,20 @@ defmodule AbnfParsec.ParserTest do
              Parser.prose_val("<as a last resort>")
   end
 
+  test "parse exception" do
+    assert {:ok,
+            [
+              exception: [
+                rulename: "CHAR",
+                one_char_string: "A",
+                core: "DQUOTE",
+                num_literal: [{:base, "x"}, "42"],
+                rulename: "some-rule"
+              ]
+            ], "", %{}, {1, 0},
+            55} = Parser.exception(~s|<any CHAR except "A" and DQUOTE and %x42 and some-rule>|)
+  end
+
   test "parse concatenation" do
     assert {:ok, [concatenation: [rulename: "a", rulename: "b"]], "", %{}, {1, 0}, 3} =
              Parser.concatenation("a b")

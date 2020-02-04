@@ -89,9 +89,7 @@ defmodule AbnfParsec.Parser do
     |> unwrap_and_tag(:base)
     |> concat(number)
 
-  num_literal =
-    numeric
-    |> tag(:num_literal)
+  defcombinatorp :num_literal, numeric |> tag(:num_literal)
 
   num_range =
     numeric
@@ -104,7 +102,7 @@ defmodule AbnfParsec.Parser do
     |> times(ignore(string(".")) |> concat(number), min: 1)
     |> tag(:num_sequence)
 
-  num_val = choice([num_range, num_sequence, num_literal])
+  num_val = choice([num_range, num_sequence, parsec(:num_literal)])
 
   rulename =
     ascii_char([?a..?z, ?A..?Z])
@@ -146,6 +144,7 @@ defmodule AbnfParsec.Parser do
       parsec(:option),
       parsec(:char_val),
       parsec(:num_val),
+      parsec(:exception),
       parsec(:prose_val)
     ])
 
@@ -164,9 +163,11 @@ defmodule AbnfParsec.Parser do
     |> tag(:repetition)
     |> post_traverse({:flatten, []})
 
+  defcombinatorp :ignore_c_wsp, ignore(times(c_wsp, min: 1))
+
   concatenation =
     parsec(:repetition)
-    |> repeat(ignore(times(c_wsp, min: 1)) |> parsec(:repetition))
+    |> repeat(parsec(:ignore_c_wsp) |> parsec(:repetition))
     |> tag(:concatenation)
     |> post_traverse({:flatten, []})
 
@@ -237,4 +238,43 @@ defmodule AbnfParsec.Parser do
   defparsec :element, element
   defparsec :rule, rule
   defparsec :rulelist, rulelist
+
+  # Extension
+
+  defcombinatorp :one_char_string_literal,
+                 ignore(string("\""))
+                 |> ascii_string([0x20, 0x21, 0x23..0x7E], 1)
+                 |> ignore(string("\""))
+                 |> unwrap_and_tag(:one_char_string)
+
+  defcombinatorp :rulename_or_char,
+                 choice([
+                   parsec(:core_rule),
+                   parsec(:rulename),
+                   parsec(:one_char_string_literal),
+                   parsec(:num_literal)
+                 ])
+  exception =
+    ignore(string("<any"))
+    |> parsec(:ignore_c_wsp)
+    |> parsec(:rulename)
+    |> parsec(:ignore_c_wsp)
+    |> ignore(string("except"))
+    |> parsec(:ignore_c_wsp)
+    |> parsec(:rulename_or_char)
+    |> repeat(
+      ignore(
+        times(c_wsp, min: 1)
+        |> string("and")
+        |> times(c_wsp, min: 1)
+      )
+      |> parsec(:rulename_or_char)
+    )
+    |> ignore(string(">"))
+    |> tag(:exception)
+
+  @doc """
+  Extension: Used in RFC3501
+  """
+  defparsec :exception, exception
 end
