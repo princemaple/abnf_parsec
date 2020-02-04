@@ -85,11 +85,9 @@ defmodule AbnfParsec.Parser do
 
   numeric =
     ignore(string("%"))
-    |> (ascii_char('xbd') |> map(:binary_wrap))
+    |> ascii_string('xbd', 1)
     |> unwrap_and_tag(:base)
     |> concat(number)
-
-  defp binary_wrap(code), do: <<code>>
 
   num_literal =
     numeric
