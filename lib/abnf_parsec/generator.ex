@@ -207,8 +207,18 @@ defmodule AbnfParsec.Generator do
     except = Enum.map(exceptions, &expand/1)
     proceed = expand(range)
 
+    lookahead =
+      case except do
+        [except] ->
+          except
+        [_|_] ->
+          quote do
+            choice(unquote(except))
+          end
+      end
+
     quote do
-      lookahead_not(choice(unquote(except))) |> unquote(proceed)
+      lookahead_not(unquote(lookahead)) |> unquote(proceed)
     end
   end
 end
