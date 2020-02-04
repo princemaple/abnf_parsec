@@ -245,7 +245,6 @@ defmodule AbnfParsec.Parser do
                  ignore(string("\""))
                  |> ascii_string([0x20, 0x21, 0x23..0x7E], 1)
                  |> ignore(string("\""))
-                 |> unwrap_and_tag(:one_char_string)
 
   defcombinatorp :rulename_or_char,
                  choice([
@@ -254,10 +253,14 @@ defmodule AbnfParsec.Parser do
                    parsec(:one_char_string_literal),
                    parsec(:num_literal)
                  ])
+
   exception =
     ignore(string("<any"))
     |> parsec(:ignore_c_wsp)
-    |> parsec(:rulename)
+    |> choice([
+      parsec(:core_rule),
+      parsec(:rulename)
+    ])
     |> parsec(:ignore_c_wsp)
     |> ignore(string("except"))
     |> parsec(:ignore_c_wsp)

@@ -81,14 +81,17 @@ defmodule AbnfParsec.ParserTest do
   end
 
   test "parse exception" do
+    assert {:ok, [exception: [{:rulename, "some-rule"}, "A"]], "", %{}, {1, 0}, 26} =
+             Parser.exception(~s|<any some-rule except "A">|)
+
     assert {:ok,
             [
               exception: [
-                rulename: "CHAR",
-                one_char_string: "A",
-                core: "DQUOTE",
-                num_literal: [{:base, "x"}, "42"],
-                rulename: "some-rule"
+                {:core, "CHAR"},
+                "A",
+                {:core, "DQUOTE"},
+                {:num_literal, [{:base, "x"}, "42"]},
+                {:rulename, "some-rule"}
               ]
             ], "", %{}, {1, 0},
             55} = Parser.exception(~s|<any CHAR except "A" and DQUOTE and %x42 and some-rule>|)
