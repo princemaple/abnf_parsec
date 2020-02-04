@@ -1,5 +1,5 @@
 defmodule AbnfParsec.ParserTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias AbnfParsec.Parser
 

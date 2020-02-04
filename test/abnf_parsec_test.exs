@@ -1,5 +1,5 @@
 defmodule AbnfParsecTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   defmodule T do
     use AbnfParsec,
@@ -229,5 +229,21 @@ defmodule AbnfParsecTest do
                ]
              }
              """)
+  end
+
+  test "debugging" do
+    import ExUnit.CaptureIO
+
+    assert "[defparsec(:a, tag(string(\"a\"), :a))]\n" ==
+             capture_io(fn ->
+               defmodule D do
+                 use AbnfParsec,
+                   abnf: """
+                   a = "a"
+                     ; just a
+                   """,
+                   debug: true
+               end
+             end)
   end
 end
