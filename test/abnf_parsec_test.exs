@@ -30,6 +30,7 @@ defmodule AbnfParsecTest do
         ; multi line comment
       a-optional-b = %x41 [%x42]
       my-c = "C"
+      ALPHA-except-A = 1*<any ALPHA except "A">
       ALPHA-except-A-B-C = 1*<any ALPHA except "A" and %x42 and my-c>
 
       part-1 = *2(%x41 [3"B"])
@@ -125,6 +126,11 @@ defmodule AbnfParsecTest do
   end
 
   test "except" do
+    assert {:ok, [alpha_except_a: 'BC'], "", %{}, {1, 0}, 2} = T.alpha_except_a("BC")
+
+    assert {:error, "did not expect string \"A\"", "ABC", %{}, {1, 0}, 0} =
+             T.alpha_except_a("ABC")
+
     assert {:ok, [alpha_except_a_b_c: 'DEFXYZ'], "", %{}, {1, 0}, 6} =
              T.alpha_except_a_b_c("DEFXYZ")
 
