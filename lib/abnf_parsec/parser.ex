@@ -138,7 +138,7 @@ defmodule AbnfParsec.Parser do
     ignore(string("<"))
     |> ascii_string([0x20..0x3D, 0x3F..0x7E], min: 1)
     |> ignore(string(">"))
-    |> tag(:option)
+    |> unwrap_and_tag(:prose_val)
 
   element =
     choice([

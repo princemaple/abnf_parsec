@@ -73,6 +73,13 @@ defmodule AbnfParsec.ParserTest do
     assert {:ok, [case_sensitive: "WxYz"], "", %{}, {1, 0}, 8} = Parser.char_val(~s|%s"WxYz"|)
   end
 
+  test "parse prose_val" do
+    assert {:ok, [prose_val: "something"], "", %{}, {1, 0}, 11} = Parser.prose_val("<something>")
+
+    assert {:ok, [prose_val: "as a last resort"], "", %{}, {1, 0}, 18} =
+             Parser.prose_val("<as a last resort>")
+  end
+
   test "parse concatenation" do
     assert {:ok, [concatenation: [rulename: "a", rulename: "b"]], "", %{}, {1, 0}, 3} =
              Parser.concatenation("a b")
