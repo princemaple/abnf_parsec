@@ -231,9 +231,24 @@ defmodule AbnfParsecTest do
              """)
   end
 
-  test "debugging" do
-    import ExUnit.CaptureIO
+  import ExUnit.CaptureIO
 
+  test "skip" do
+    assert "[[]]\n" ==
+             capture_io(fn ->
+               defmodule S do
+                 use AbnfParsec,
+                   abnf: """
+                   a = "a"
+                     ; just a
+                   """,
+                   skip: ["a"],
+                   debug: true
+               end
+             end)
+  end
+
+  test "debugging" do
     assert "[defparsec(:a, tag(string(\"a\"), :a))]\n" ==
              capture_io(fn ->
                defmodule D do

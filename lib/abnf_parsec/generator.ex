@@ -55,8 +55,12 @@ defmodule AbnfParsec.Generator do
           Macro.pipe(definition, quote(do: tag(unquote(parsec_name))), 0)
       end
 
-    quote do
-      defparsec unquote(parsec_name), unquote(definition)
+    if rulename in Map.get(opts, :skip, []) do
+      []
+    else
+      quote do
+        defparsec unquote(parsec_name), unquote(definition)
+      end
     end
   end
 
