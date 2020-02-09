@@ -6,7 +6,7 @@ Parses ABNF with a parser written with `nimble_parsec`, emits parser consists of
 
 ## Features
 
-- Brevity - flattened unnecessary nesting in parsed ABNF
+- Brevity - flattens unnecessary nesting in parsed ABNF
 - Easy to config and customzie
 - Full test coverage
 
@@ -18,7 +18,7 @@ by adding `abnf_parsec` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:abnf_parsec, "~> 0.1.0", runtime: false}
+    {:abnf_parsec, "~> 0.1", runtime: false}
   ]
 end
 ```
