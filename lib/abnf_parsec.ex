@@ -1,7 +1,7 @@
 defmodule AbnfParsec do
   alias AbnfParsec.{Parser, Generator}
 
-  @doc """
+  @moduledoc """
   Generates a parser from ABNF definition - text (`:abnf`) or file path (`:abnf_file`)
 
   An entry rule can be defined by `:parse`. If defined, a `parse/1` function and a
@@ -79,6 +79,32 @@ defmodule AbnfParsec do
           [string: ["e"], value: [string: ["e\\te"]]]
         ]
       ]
+  """
+
+  @type rulename :: :binary
+  @type rulenames :: [rulename()]
+  @type transformation :: {:replace | :reduce | :map, mfa :: {module, atom, [term]}}
+  @type transformations :: %{optional(rulename) => transformation | [transformation]}
+
+  @doc """
+  All rules by default are wrapped and tagged. See NimbleParsec for more details.
+
+  Options:
+
+    - :abnf (`binary`) - ABNF directly in string data
+    - :abnf_file (`binary`) - ABNF file path
+    - :debug (`boolean`) - whether to output generated parser code
+
+    - :skip (`rulenames`) - rules to be skipped when generating parser code
+      - so user can define their own parsec definition
+    - :ignore (`rulenames`) - rules to be discarded after being parsed
+    - :untag (`rulenames`) - rules to be wrapped only after being parsed
+    - :unwrap (`rulenames`) - rules to be tagged only after being parsed
+      - needs to be sure that there is only singular parsed entry
+    - :unbox (`rulenames`) - made up term, to both untag and unwrap
+    - :transform (`transformations`) -
+    - :parse (`atom`) - described in module doc, needs to be an atom that is in
+      normalized form of its original string rulename
   """
   defmacro __using__(opts) do
     abnf =
