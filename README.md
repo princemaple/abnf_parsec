@@ -411,124 +411,169 @@ And generated parser looks like:
 [
   defparsec(
     :rulelist,
-    times(choice([parsec(:rule), parsec(repeat(parsec(:c_wsp)), :c_nl)]), min: 1)
-    |> tag(:rulelist)
+    tag(
+      times(choice([parsec(:rule), repeat(parsec(:c_wsp)) |> parsec(:c_nl)]), min: 1),
+      :rulelist
+    )
   ),
   defparsec(
     :rule,
-    parsec(parsec(parsec(parsec(:rulename), :defined_as), :elements), :c_nl) |> tag(:rule)
+    tag(parsec(:rulename) |> parsec(:defined_as) |> parsec(:elements) |> parsec(:c_nl), :rule)
   ),
   defparsec(
     :rulename,
-    repeat(parsec(:core_alpha), choice([parsec(:core_alpha), parsec(:core_digit), string("-")]))
-    |> tag(:rulename)
+    tag(
+      parsec(:core_alpha)
+      |> repeat(choice([parsec(:core_alpha), parsec(:core_digit), string("-")])),
+      :rulename
+    )
   ),
   defparsec(
     :defined_as,
-    repeat(choice(repeat(parsec(:c_wsp)), [string("="), string("=/")]), parsec(:c_wsp))
-    |> tag(:defined_as)
+    tag(
+      repeat(parsec(:c_wsp)) |> choice([string("="), string("=/")]) |> repeat(parsec(:c_wsp)),
+      :defined_as
+    )
   ),
-  defparsec(:elements, repeat(parsec(:alternation), parsec(:c_wsp)) |> tag(:elements)),
-  defparsec(:c_wsp, choice([parsec(:core_wsp), parsec(parsec(:c_nl), :core_wsp)]) |> tag(:c_wsp)),
-  defparsec(:c_nl, choice([parsec(:comment), parsec(:core_crlf)]) |> tag(:c_nl)),
+  defparsec(:elements, tag(parsec(:alternation) |> repeat(parsec(:c_wsp)), :elements)),
+  defparsec(:c_wsp, tag(choice([parsec(:core_wsp), parsec(:c_nl) |> parsec(:core_wsp)]), :c_wsp)),
+  defparsec(:c_nl, tag(choice([parsec(:comment), parsec(:core_crlf)]), :c_nl)),
   defparsec(
     :comment,
-    parsec(repeat(string(";"), choice([parsec(:core_wsp), parsec(:core_vchar)])), :core_crlf)
-    |> tag(:comment)
+    tag(
+      string(";")
+      |> repeat(choice([parsec(:core_wsp), parsec(:core_vchar)]))
+      |> parsec(:core_crlf),
+      :comment
+    )
   ),
   defparsec(
     :alternation,
-    repeat(
-      parsec(:concatenation),
-      parsec(repeat(string(repeat(parsec(:c_wsp)), "/"), parsec(:c_wsp)), :concatenation)
+    tag(
+      parsec(:concatenation)
+      |> repeat(
+        repeat(parsec(:c_wsp))
+        |> string("/")
+        |> repeat(parsec(:c_wsp))
+        |> parsec(:concatenation)
+      ),
+      :alternation
     )
-    |> tag(:alternation)
   ),
   defparsec(
     :concatenation,
-    repeat(parsec(:repetition), parsec(times(parsec(:c_wsp), min: 1), :repetition))
-    |> tag(:concatenation)
+    tag(
+      parsec(:repetition) |> repeat(times(parsec(:c_wsp), min: 1) |> parsec(:repetition)),
+      :concatenation
+    )
   ),
-  defparsec(:repetition, parsec(optional(parsec(:repeat)), :element) |> tag(:repetition)),
+  defparsec(:repetition, tag(optional(parsec(:repeat)) |> parsec(:element), :repetition)),
   defparsec(
     :repeat,
-    choice([
-      times(parsec(:core_digit), min: 1),
-      repeat(string(repeat(parsec(:core_digit)), "*"), parsec(:core_digit))
-    ])
-    |> tag(:repeat)
+    tag(
+      choice([
+        times(parsec(:core_digit), min: 1),
+        repeat(parsec(:core_digit)) |> string("*") |> repeat(parsec(:core_digit))
+      ]),
+      :repeat
+    )
   ),
   defparsec(
     :element,
-    choice([
-      parsec(:rulename),
-      parsec(:group),
-      parsec(:option),
-      parsec(:char_val),
-      parsec(:num_val),
-      parsec(:prose_val)
-    ])
-    |> tag(:element)
+    tag(
+      choice([
+        parsec(:rulename),
+        parsec(:group),
+        parsec(:option),
+        parsec(:char_val),
+        parsec(:num_val),
+        parsec(:prose_val)
+      ]),
+      :element
+    )
   ),
   defparsec(
     :group,
-    string(repeat(parsec(repeat(string("("), parsec(:c_wsp)), :alternation), parsec(:c_wsp)), ")")
-    |> tag(:group)
+    tag(
+      string("(")
+      |> repeat(parsec(:c_wsp))
+      |> parsec(:alternation)
+      |> repeat(parsec(:c_wsp))
+      |> string(")"),
+      :group
+    )
   ),
   defparsec(
     :option,
-    string(repeat(parsec(repeat(string("["), parsec(:c_wsp)), :alternation), parsec(:c_wsp)), "]")
-    |> tag(:option)
+    tag(
+      string("[")
+      |> repeat(parsec(:c_wsp))
+      |> parsec(:alternation)
+      |> repeat(parsec(:c_wsp))
+      |> string("]"),
+      :option
+    )
   ),
   defparsec(
     :char_val,
-    parsec(
-      repeat(parsec(:core_dquote), choice([ascii_char([32..33]), ascii_char([35..126])])),
-      :core_dquote
+    tag(
+      parsec(:core_dquote)
+      |> repeat(choice([ascii_char([32..33]), ascii_char([35..126])]))
+      |> parsec(:core_dquote),
+      :char_val
     )
-    |> tag(:char_val)
   ),
   defparsec(
     :num_val,
-    choice(string("%"), [parsec(:bin_val), parsec(:dec_val), parsec(:hex_val)]) |> tag(:num_val)
+    tag(string("%") |> choice([parsec(:bin_val), parsec(:dec_val), parsec(:hex_val)]), :num_val)
   ),
   defparsec(
     :bin_val,
-    optional(
-      times(string("b"), parsec(:core_bit), min: 1),
-      choice([
-        times(times(string("."), parsec(:core_bit), min: 1), min: 1),
-        times(string("-"), parsec(:core_bit), min: 1)
-      ])
+    tag(
+      string("b")
+      |> times(parsec(:core_bit), min: 1)
+      |> optional(
+        choice([
+          times(string(".") |> times(parsec(:core_bit), min: 1), min: 1),
+          string("-") |> times(parsec(:core_bit), min: 1)
+        ])
+      ),
+      :bin_val
     )
-    |> tag(:bin_val)
   ),
   defparsec(
     :dec_val,
-    optional(
-      times(string("d"), parsec(:core_digit), min: 1),
-      choice([
-        times(times(string("."), parsec(:core_digit), min: 1), min: 1),
-        times(string("-"), parsec(:core_digit), min: 1)
-      ])
+    tag(
+      string("d")
+      |> times(parsec(:core_digit), min: 1)
+      |> optional(
+        choice([
+          times(string(".") |> times(parsec(:core_digit), min: 1), min: 1),
+          string("-") |> times(parsec(:core_digit), min: 1)
+        ])
+      ),
+      :dec_val
     )
-    |> tag(:dec_val)
   ),
   defparsec(
     :hex_val,
-    optional(
-      times(string("x"), parsec(:core_hexdig), min: 1),
-      choice([
-        times(times(string("."), parsec(:core_hexdig), min: 1), min: 1),
-        times(string("-"), parsec(:core_hexdig), min: 1)
-      ])
+    tag(
+      string("x")
+      |> times(parsec(:core_hexdig), min: 1)
+      |> optional(
+        choice([
+          times(string(".") |> times(parsec(:core_hexdig), min: 1), min: 1),
+          string("-") |> times(parsec(:core_hexdig), min: 1)
+        ])
+      ),
+      :hex_val
     )
-    |> tag(:hex_val)
   ),
   defparsec(
     :prose_val,
-    string(repeat(string("<"), choice([ascii_char([32..61]), ascii_char([63..126])])), ">")
-    |> tag(:prose_val)
+    tag(
+      string("<") |> repeat(choice([ascii_char([32..61]), ascii_char([63..126])])) |> string(">"),
+      :prose_val
+    )
   )
-]
-```
+]```
