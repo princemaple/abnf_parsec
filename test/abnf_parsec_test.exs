@@ -261,4 +261,19 @@ defmodule AbnfParsecTest do
                end
              end)
   end
+
+  test "customization" do
+    defmodule X do
+      use AbnfParsec,
+        abnf: """
+        a = "a"; will be overridden
+        """,
+        skip: ["a"]
+
+      defparsec :a, string("b")
+    end
+
+    assert {:error, "expected string \"b\"", "a", %{}, {1, 0}, 0} = X.a("a")
+    assert {:ok, ["b"], "", %{}, {1, 0}, 1} = X.a("b")
+  end
 end
