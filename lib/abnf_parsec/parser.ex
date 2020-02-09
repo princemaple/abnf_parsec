@@ -1,6 +1,8 @@
 defmodule AbnfParsec.Parser do
   import NimbleParsec
 
+  @extra_utf8_range Application.compile_env(:abnf_parsec, :extra_utf8_range, [])
+
   @moduledoc """
   Abnf Parser.
   """
@@ -50,7 +52,7 @@ defmodule AbnfParsec.Parser do
   comment =
     ignore(string(";"))
     |> optional(ignore(help_space))
-    |> repeat_while(ascii_char([?\ , ?\t, 0x21..0x7E]), {:not_cr_lf, []})
+    |> repeat_while(utf8_char([?\ , ?\t, 0x21..0x7E] ++ @extra_utf8_range), {:not_cr_lf, []})
     |> ignore(string("\r\n"))
     |> reduce({List, :to_string, []})
     |> unwrap_and_tag(:comment)
