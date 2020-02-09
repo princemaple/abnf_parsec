@@ -1,8 +1,14 @@
 # AbnfParsec
 
-Input ABNF and output parser.
+### ABNF in and parser out.
 
 Parses ABNF with a parser written with `nimble_parsec`, emits parser consists of `nimble_parsec` combinators.
+
+## Features
+
+- Brevity - flattened unnecessary nesting in parsed ABNF
+- Easy to config and customzie
+- Full test coverage
 
 ## Installation
 
@@ -27,21 +33,30 @@ be found at [https://hexdocs.pm/abnf_parsec](https://hexdocs.pm/abnf_parsec).
 defmodule IPv4Parser do
   use AbnfParsec,
     abnf: """
-    ip = dec-octet 3("." dec-octet)
+    ip = first dot second dot third dot fourth
+    dot = "."
     dec-octet =
       "25" %x30-35      /   ; 250-255
       "2" %x30-34 DIGIT /   ; 200-249
       "1" 2DIGIT        /   ; 100-199
       %x31-39 DIGIT     /   ; 10-99
       DIGIT                 ; 0-9
+    first = dec-octet
+    second = dec-octet
+    third = dec-octet
+    fourth = dec-octet
     """,
+    unbox: ["dec-octet"],
+    ignore: ["dot"],
     parse: :ip
 end
 
-IPv4Parser.ip("192.168.0.1")
-# or
-IPv4Parser.parse("127.0.0.1")
-IPv4Parser.parse!("127.0.0.1")
+# IPv4Parser.ip("192.168.0.1")
+# IPv4Parser.parse("127.0.0.1")
+# IPv4Parser.parse!("10.0.0.1")
+
+iex> IPv4Parser.parse! "10.0.0.1"
+[ip: [first: '10', second: '0', third: '0', fourth: '1']]
 ```
 
 ```elixir
@@ -49,6 +64,27 @@ defmodule JsonParser do
   use AbnfParsec,
     abnf_file: "test/fixture/json.abnf",
     parse: :json_text,
+    transform: %{
+      "string" => {:reduce, {List, :to_string, []}},
+      "int" => [{:reduce, {List, :to_string, []}}, {:map, {String, :to_integer, []}}],
+      "frac" => {:reduce, {List, :to_string, []}},
+      "null" => {:replace, nil},
+      "true" => {:replace, true},
+      "false" => {:replace, false}
+    },
+    untag: ["member"],
+    unwrap: ["int", "frac"],
+    unbox: [
+      "JSON-text",
+      "null",
+      "true",
+      "false",
+      "digit1-9",
+      "decimal-point",
+      "escape",
+      "unescaped",
+      "char"
+    ],
     ignore: [
       "name-separator",
       "value-separator",
@@ -64,10 +100,28 @@ json = """
   {"a": {"b": 1, "c": [true]}, "d": null, "e": "e\\te"}
   """
 
-JsonParser.json_text(json)
-# or
-JsonParser.parse(json)
-JsonParser.parse!(json)
+# JsonParser.json_text(json)
+# JsonParser.parse(json)
+# JsonParser.parse!(json)
+
+iex> JsonParser.parse! """
+...> {"a": {"b": 1, "c": [true]}, "d": null, "e": "e\\te"}
+...> """
+[
+  object: [
+    [
+      string: ["a"],
+      value: [
+        object: [
+          [string: ["b"], value: [number: [int: 1]]],
+          [string: ["c"], value: [array: [value: [true]]]]
+        ]
+      ]
+    ],
+    [string: ["d"], value: [nil]],
+    [string: ["e"], value: [string: ["e\\te"]]]
+  ]
+]
 ```
 
 For more details of options for customization, see [abnf_parsec.ex](https://github.com/princemaple/abnf_parsec/blob/master/lib/abnf_parsec.ex)

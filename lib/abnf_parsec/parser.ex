@@ -2,7 +2,7 @@ defmodule AbnfParsec.Parser do
   import NimbleParsec
 
   @moduledoc """
-  Documentation for AbnfParsec Parser.
+  AbnfParsec Parser.
   """
 
   alpha = string("ALPHA") |> unwrap_and_tag(:core)

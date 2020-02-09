@@ -19,7 +19,7 @@ defmodule AbnfParsec do
 
   Example usage:
 
-      defmodule J do
+      defmodule JsonParser do
         use AbnfParsec,
           abnf_file: "test/fixture/json.abnf",
           parse: :json_text,
