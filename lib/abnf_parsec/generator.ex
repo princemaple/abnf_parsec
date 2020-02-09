@@ -1,4 +1,6 @@
 defmodule AbnfParsec.Generator do
+  @moduledoc false
+
   core_parsecs =
     quote do
       defparsecp :core_alpha, ascii_char([?A..?Z, ?a..?z])

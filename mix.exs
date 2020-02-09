@@ -10,8 +10,10 @@ defmodule AbnfParsec.MixProject do
       elixir: "~> 1.9",
       deps: deps(),
       name: "AbnfParsec",
+      description: "ABNF in, parser out",
       source_url: "https://github.com/princemaple/abnf_parsec",
       homepage_url: "https://github.com/princemaple/abnf_parsec",
+      package: package(),
       docs: docs()
     ]
   end
@@ -25,7 +27,15 @@ defmodule AbnfParsec.MixProject do
   defp deps do
     [
       {:nimble_parsec, "~> 0.5"},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+    ]
+  end
+
+  defp package do
+    [
+      files: ~w(lib mix.exs README* LICENSE* CHANGELOG*),
+      license: ["MIT"],
+      links: %{"GitHub" => "https://github.com/princemaple/abnf_parsec"}
     ]
   end
 

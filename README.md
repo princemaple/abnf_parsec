@@ -18,7 +18,7 @@ by adding `abnf_parsec` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:abnf_parsec, "~> 0.1.0"}
+    {:abnf_parsec, "~> 0.1.0", runtime: false}
   ]
 end
 ```
