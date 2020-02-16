@@ -12,8 +12,8 @@ Parses ABNF with a parser written with `nimble_parsec`, emits parser consists of
 
 ## Installation
 
-If [available in Hex](https://hex.pm/packages/nimble_parsec), the package can be installed
-by adding `abnf_parsec` to your list of dependencies in `mix.exs`:
+The [package](https://hex.pm/packages/abnf_parsec) is available on [Hex](https://hex.pm)
+and can be installed by adding `abnf_parsec` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
