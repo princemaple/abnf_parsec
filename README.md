@@ -12,7 +12,7 @@ Parses ABNF with a parser written with `nimble_parsec`, emits parser consists of
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+If [available in Hex](https://hex.pm/packages/nimble_parsec), the package can be installed
 by adding `abnf_parsec` to your list of dependencies in `mix.exs`:
 
 ```elixir
