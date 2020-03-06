@@ -91,19 +91,24 @@ defmodule AbnfParsec do
 
   Options:
 
-    - :abnf (`binary`) - ABNF directly in string data
-    - :abnf_file (`binary`) - ABNF file path
-    - :debug (`boolean`) - whether to output generated parser code
+    - `:abnf` (`binary`) - ABNF directly in string data
+    - `:abnf_file` (`binary`) - ABNF file path
+    - `:debug` (`boolean`) - whether to output generated parser code
 
-    - :skip (`rulenames`) - rules to be skipped when generating parser code
+    - `:skip` (`rulenames`) - rules to be skipped when generating parser code
       - so user can define their own parsec definition
-    - :ignore (`rulenames`) - rules to be discarded after being parsed
-    - :untag (`rulenames`) - rules to be wrapped only after being parsed
-    - :unwrap (`rulenames`) - rules to be tagged only after being parsed
+    - `:ignore` (`rulenames`) - rules to be discarded after being parsed
+    - `:untag` (`rulenames`) - rules to be wrapped only after being parsed
+    - `:unwrap` (`rulenames`) - rules to be tagged only after being parsed
       - needs to be sure that there is only singular parsed entry
-    - :unbox (`rulenames`) - made up term, to both untag and unwrap
-    - :transform (`transformations`) -
-    - :parse (`atom`) - described in module doc, needs to be an atom that is in
+    - `:unbox` (`rulenames`) - made up term, to both untag and unwrap
+    - `:transform` (`transformations`) - a map of `rulenames` to transformations
+      - `{:map, mfa}`
+      - `{:reduce, mfa}`
+      - `{:replace, val}`
+      - `{:post_traverse, mfa}`
+      - `{:pre_traverse, mfa}`
+    - `:parse` (`atom`) - described in module doc, needs to be an atom that is in
       normalized form of its original string rulename
   """
   defmacro __using__(opts) do
