@@ -276,4 +276,26 @@ defmodule AbnfParsecTest do
     assert {:error, "expected string \"b\"", "a", %{}, {1, 0}, 0} = X.a("a")
     assert {:ok, ["b"], "", %{}, {1, 0}, 1} = X.a("b")
   end
+
+  test "pre/post traverse" do
+    defmodule Y do
+      use AbnfParsec,
+        abnf: """
+        n = *DIGIT
+        d = "-"
+        y = n d n d n
+        """,
+        untag: ["n", "d"],
+        transform: %{
+          "n" => {:pre_traverse, {:join, []}},
+          "y" => {:post_traverse, {:join, []}}
+        }
+
+      defp join(_, args, context, _, _) do
+        {[Enum.join(args)], context}
+      end
+    end
+
+    assert {:ok, [y: ["515049-5049-49"]], "", %{}, {1, 0}, 8} = Y.y("1-12-123")
+  end
 end

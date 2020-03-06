@@ -85,6 +85,12 @@ defmodule AbnfParsec.Generator do
       {:replace, val} ->
         Macro.pipe(definition, quote(do: replace(unquote(Macro.escape(val)))), 0)
 
+      {:pre_traverse, mfa} ->
+        Macro.pipe(definition, quote(do: pre_traverse(unquote(Macro.escape(mfa)))), 0)
+
+      {:post_traverse, mfa} ->
+        Macro.pipe(definition, quote(do: post_traverse(unquote(Macro.escape(mfa)))), 0)
+
       nil ->
         definition
     end
