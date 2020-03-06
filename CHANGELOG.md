@@ -1,3 +1,9 @@
+## v0.1.2 - 2020-03-06
+
+### Added
+
+- `pre/post_traverse` transformation
+
 ## v0.1.1 - 2020-02-10
 
 ### Changed
