@@ -134,7 +134,7 @@ defmodule AbnfParsecTest do
     assert {:ok, [alpha_except_a_b_c: 'DEFXYZ'], "", %{}, {1, 0}, 6} =
              T.alpha_except_a_b_c("DEFXYZ")
 
-    assert {:error, "did not expect string \"A\" or ASCII character equal to 'B' or my_c", "A", %{}, {1, 0},
+    assert {:error, "did not expect string \"A\" or byte equal to ?B or my_c", "A", %{}, {1, 0},
             0} = T.alpha_except_a_b_c("A")
 
     assert {:error, _, "B", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("B")
