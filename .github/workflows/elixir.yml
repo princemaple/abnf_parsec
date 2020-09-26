@@ -13,7 +13,7 @@ jobs:
       uses: actions/setup-elixir@v1
       with:
         elixir-version: 1.10.0
-        otp-version: 22.2
+        otp-version: 23.1
     - name: Install Dependencies
       run: mix deps.get
     - name: Run Tests
