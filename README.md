@@ -7,7 +7,7 @@ Parses ABNF with a parser written with `nimble_parsec`, emits parser consists of
 ## Features
 
 - Brevity - flattens unnecessary nesting in parsed ABNF
-- Easy to config and customzie
+- Easy to config and customize
 - Full test coverage
 
 ## Installation
