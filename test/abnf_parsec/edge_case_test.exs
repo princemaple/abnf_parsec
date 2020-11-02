@@ -9,6 +9,6 @@ defmodule EdgeCaseTest do
         """
     end
 
-    assert {:ok, [path_empty: [""]], "", %{}, {1, 0}, 0} = ZeroRepetition.path_empty("")
+    assert {:ok, [path_empty: []], "", %{}, {1, 0}, 0} = ZeroRepetition.path_empty("")
   end
 end
