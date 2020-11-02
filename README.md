@@ -20,7 +20,7 @@ and can be installed by adding `abnf_parsec` to your list of dependencies in `mi
 ```elixir
 def deps do
   [
-    {:abnf_parsec, "~> 0.1", runtime: false}
+    {:abnf_parsec, "~> 1.0", runtime: false}
   ]
 end
 ```

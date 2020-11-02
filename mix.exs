@@ -1,7 +1,7 @@
 defmodule AbnfParsec.MixProject do
   use Mix.Project
 
-  @version "0.1.3"
+  @version "1.0.0"
 
   def project do
     [
@@ -26,7 +26,7 @@ defmodule AbnfParsec.MixProject do
 
   defp deps do
     [
-      {:nimble_parsec, "~> 1.0"},
+      {:nimble_parsec, "~> 1.1"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
