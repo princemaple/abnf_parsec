@@ -210,6 +210,11 @@ defmodule AbnfParsec.Generator do
           repeat(unquote(repeated))
         end
 
+      [times: 0] ->
+        quote do
+          string("")
+        end
+
       [times: times] ->
         quote do
           times(unquote(repeated), unquote(times))

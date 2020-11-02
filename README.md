@@ -1,5 +1,7 @@
 # AbnfParsec
 
+[![hex.pm](https://img.shields.io/hexpm/v/abfn_parsec.svg)](https://hex.pm/packages/abfn_parsec)
+
 ### ABNF in and parser out.
 
 Parses ABNF with a parser written with `nimble_parsec`, emits parser consists of `nimble_parsec` combinators.
