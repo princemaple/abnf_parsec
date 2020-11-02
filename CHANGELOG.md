@@ -1,3 +1,9 @@
+## v1.0.0 - 2020-11-03
+
+Not much, just that it's stable enough
+
+- handle 0 repeat @princemaple (#15)
+
 ## v0.1.2 - 2020-03-06
 
 ### Added
