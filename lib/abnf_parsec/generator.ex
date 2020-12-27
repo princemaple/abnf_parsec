@@ -153,6 +153,12 @@ defmodule AbnfParsec.Generator do
     end
   end
 
+  defp expand({:case_sensitive, string}) when is_binary(string) do
+    quote do
+      string(unquote(string))
+    end
+  end
+
   defp expand({:num_literal, [{:base, base}, num]}) do
     num = base_num(num, base)
 
