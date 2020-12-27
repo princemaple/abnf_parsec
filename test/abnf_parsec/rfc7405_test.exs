@@ -6,6 +6,7 @@ defmodule AbnfParsec.RFC7405Test do
       use AbnfParsec,
         abnf: """
         case-sensitive = %s"abc"
+        case-insensitive = %i"abc"
         """
     end
 
