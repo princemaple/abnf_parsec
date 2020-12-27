@@ -148,6 +148,10 @@ defmodule AbnfParsec.Generator do
   end
 
   defp expand(string) when is_binary(string) do
+    expand({:case_insensitive, string})
+  end
+
+  defp expand({:case_insensitive, string}) when is_binary(string) do
     quote do
       string(unquote(string))
     end
