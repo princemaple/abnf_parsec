@@ -148,12 +148,24 @@ defmodule AbnfParsec.Generator do
   end
 
   defp expand(string) when is_binary(string) do
-    expand({:case_insensitive, string})
+    #    TODO switch this over to :case_sensitive
+    expand({:case_sensitive, string})
   end
 
   defp expand({:case_insensitive, string}) when is_binary(string) do
+    lower = String.downcase(string)
+    upper = String.upcase(string)
+
+    insensitive =
+      Enum.zip(String.to_charlist(lower), String.to_charlist(upper))
+      |> Enum.map(fn
+        {c, c} -> {:case_sensitive, <<c>>}
+        {l, u} -> {:alternation, [{:case_sensitive, <<l>>}, {:case_sensitive, <<u>>}]}
+      end)
+
     quote do
-      string(unquote(string))
+      unquote(expand({:concatenation, insensitive}))
+      |> reduce({Enum, :join, []})
     end
   end
 
