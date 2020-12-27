@@ -1,3 +1,10 @@
+## v1.1.0 - 2020-12-28
+
+### 🚀 Features
+
+- Rfc7405 @guenni68 (#16)
+  - Adds case-insensitive string matching but haven't switched default to case-insensitive yet
+
 ## v1.0.0 - 2020-11-03
 
 Not much, just that it's stable enough
