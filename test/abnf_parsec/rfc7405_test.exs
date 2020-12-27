@@ -12,5 +12,10 @@ defmodule AbnfParsec.RFC7405Test do
 
     abc = "abc"
     assert {:ok, [case_sensitive: [^abc]], "", %{}, {1, 0}, 3} = RFC7405.case_sensitive(abc)
+
+    assert {:ok, [case_insensitive: ["aBc"]], "D", %{}, {1, 0}, 3} =
+             RFC7405.case_insensitive("aBcD")
+
+    assert {:error, _msg, "DBCA", %{}, {1, 0}, 0} = RFC7405.case_insensitive("DBCA")
   end
 end
