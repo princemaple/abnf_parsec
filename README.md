@@ -129,7 +129,7 @@ iex> JsonParser.parse! """
 ]
 ```
 
-For more details of options for customization, see [abnf_parsec.ex](https://github.com/princemaple/abnf_parsec/blob/master/lib/abnf_parsec.ex)
+For more details of options for customization, see [abnf_parsec.ex](https://github.com/princemaple/abnf_parsec/blob/main/lib/abnf_parsec.ex)
 
 ## What does it do, really?
 
