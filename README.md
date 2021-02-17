@@ -1,6 +1,9 @@
 # AbnfParsec
 
 [![hex.pm](https://img.shields.io/hexpm/v/abnf_parsec.svg)](https://hex.pm/packages/abnf_parsec)
+[![hex.pm](https://img.shields.io/hexpm/dt/abnf_parsec.svg)](https://hex.pm/packages/abnf_parsec)
+[![hex.pm](https://img.shields.io/hexpm/l/abnf_parsec.svg)](https://hex.pm/packages/abnf_parsec)
+[![github.com](https://img.shields.io/github/last-commit/princemaple/abnf_parsec.svg)](https://github.com/princemaple/abnf_parsec)
 
 ### ABNF in and parser out.
 
