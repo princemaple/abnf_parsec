@@ -128,14 +128,15 @@ defmodule AbnfParsecTest do
   test "except" do
     assert {:ok, [alpha_except_a: 'BC'], "", %{}, {1, 0}, 2} = T.alpha_except_a("BC")
 
-    assert {:error, "did not expect string \"A\"", "ABC", %{}, {1, 0}, 0} =
+    assert {:error, "did not expect string \"a\" or string \"A\"", "ABC", %{}, {1, 0}, 0} =
              T.alpha_except_a("ABC")
 
     assert {:ok, [alpha_except_a_b_c: 'DEFXYZ'], "", %{}, {1, 0}, 6} =
              T.alpha_except_a_b_c("DEFXYZ")
 
-    assert {:error, "did not expect string \"A\" or ASCII character equal to 'B' or my_c", "A", %{}, {1, 0},
-            0} = T.alpha_except_a_b_c("A")
+    assert {:error,
+            "did not expect string \"a\" or string \"A\" or ASCII character equal to 'B' or my_c",
+            "A", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("A")
 
     assert {:error, _, "B", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("B")
     assert {:error, _, "C", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("C")
@@ -254,7 +255,7 @@ defmodule AbnfParsecTest do
                defmodule D do
                  use AbnfParsec,
                    abnf: """
-                   a = "a"
+                   a = %s"a"
                      ; just a
                    """,
                    debug: true
