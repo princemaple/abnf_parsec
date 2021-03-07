@@ -147,9 +147,12 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp expand(string) when is_binary(string) do
-    #    TODO switch this over to :case_sensitive
+  defp expand(<<_::utf8>> = string) do
     expand({:case_sensitive, string})
+  end
+
+  defp expand(string) when is_binary(string) do
+    expand({:case_insensitive, string})
   end
 
   defp expand({:case_insensitive, string}) when is_binary(string) do
