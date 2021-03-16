@@ -1,3 +1,9 @@
+## v1.2.0 - 2021-03-17
+
+### Changed
+
+Now strings default to be case insensitive
+
 ## v1.1.0 - 2020-12-28
 
 ### 🚀 Features
