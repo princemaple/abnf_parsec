@@ -133,7 +133,7 @@ For more details of options for customization, see [abnf_parsec.ex](https://gith
 
 ## What does it do, really?
 
-For example, ABNF of ABNF is parsed
+For example, ABNF of ABNF 😉 is parsed
 
 ```
 rulelist       =  1*( rule / (*c-wsp c-nl) )
