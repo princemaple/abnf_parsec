@@ -1,3 +1,9 @@
+## v1.2.1 - 2022-02-05
+
+### Fixed
+
+- String concatenation bug caused by case insensitivity implementation
+
 ## v1.2.0 - 2021-03-17
 
 ### Changed
