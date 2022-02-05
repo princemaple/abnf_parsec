@@ -14,11 +14,11 @@ defmodule AbnfParsec.Generator do
       defparsecp :core_hexdig, ascii_char([0x30..0x39, ?A, ?B, ?C, ?D, ?E, ?F])
       defparsecp :core_htab, string("\t")
       defparsecp :core_lf, string("\n")
-      defparsecp :core_lwsp, repeat(optional(string("\r\n")) |> ascii_char([?\ , ?\t]))
+      defparsecp :core_lwsp, repeat(optional(string("\r\n")) |> ascii_char([?\s, ?\t]))
       defparsecp :core_octet, ascii_char([0x00..0xFF])
       defparsecp :core_sp, string(" ")
       defparsecp :core_vchar, ascii_char([0x21..0x7E])
-      defparsecp :core_wsp, ascii_char([?\ , ?\t])
+      defparsecp :core_wsp, ascii_char([?\s, ?\t])
     end
 
   @core core_parsecs
