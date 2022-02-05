@@ -47,12 +47,12 @@ defmodule AbnfParsec.Parser do
     ])
     |> lookahead_not(rulename_tail)
 
-  help_space = ascii_string([?\ , ?\t], min: 1)
+  help_space = ascii_string([?\s, ?\t], min: 1)
 
   comment =
     ignore(string(";"))
     |> optional(ignore(help_space))
-    |> repeat_while(utf8_char([?\ , ?\t, 0x21..0x7E] ++ @extra_utf8_range), {:not_cr_lf, []})
+    |> repeat_while(utf8_char([?\s, ?\t, 0x21..0x7E] ++ @extra_utf8_range), {:not_cr_lf, []})
     |> ignore(string("\r\n"))
     |> reduce({List, :to_string, []})
     |> unwrap_and_tag(:comment)
