@@ -167,8 +167,7 @@ defmodule AbnfParsec.Generator do
       end)
 
     quote do
-      unquote(expand({:concatenation, insensitive}))
-      |> reduce({Enum, :join, []})
+      reduce(unquote(expand({:concatenation, insensitive})), {Enum, :join, []})
     end
   end
 
