@@ -14,7 +14,11 @@ defmodule AbnfParsec.MixProject do
       source_url: "https://github.com/princemaple/abnf_parsec",
       homepage_url: "https://github.com/princemaple/abnf_parsec",
       package: package(),
-      docs: docs()
+      docs: docs(),
+      preferred_cli_env: [
+        docs: :docs,
+        "hex.publish": :docs
+      ]
     ]
   end
 
