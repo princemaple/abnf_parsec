@@ -16,7 +16,7 @@ jobs:
           otp-version: '24'
 
       - name: Restore dependencies cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             deps
