@@ -42,8 +42,8 @@ defmodule AbnfParsecTest do
   test "core" do
     assert {:ok, [my_sp: [" "]], "", %{}, {1, 0}, 1} = T.my_sp(" ")
     assert {:ok, [my_my_sp: [my_sp: [" "]]], "", %{}, {1, 0}, 1} = T.my_my_sp(" ")
-    assert {:ok, [my_alpha: 'a'], "", %{}, {1, 0}, 1} = T.my_alpha("a")
-    assert {:ok, [my_lwsp: '    '], "", %{}, {1, 0}, 4} = T.my_lwsp("    ")
+    assert {:ok, [my_alpha: ~c"a"], "", %{}, {1, 0}, 1} = T.my_alpha("a")
+    assert {:ok, [my_lwsp: ~c"    "], "", %{}, {1, 0}, 4} = T.my_lwsp("    ")
   end
 
   test "char_val" do
@@ -51,29 +51,29 @@ defmodule AbnfParsecTest do
   end
 
   test "num_val" do
-    assert {:ok, [a_num_literal: 'A'], "", %{}, {1, 0}, 1} = T.a_num_literal("A")
+    assert {:ok, [a_num_literal: ~c"A"], "", %{}, {1, 0}, 1} = T.a_num_literal("A")
     assert {:error, _, _, _, _, _} = T.a_num_literal("B")
 
-    assert {:ok, [a_num_literal_binary: 'A'], "", %{}, {1, 0}, 1} = T.a_num_literal_binary("A")
+    assert {:ok, [a_num_literal_binary: ~c"A"], "", %{}, {1, 0}, 1} = T.a_num_literal_binary("A")
 
-    assert {:ok, [abc_num_range: 'A'], "", %{}, {1, 0}, 1} = T.abc_num_range("A")
-    assert {:ok, [abc_num_range: 'B'], "", %{}, {1, 0}, 1} = T.abc_num_range("B")
-    assert {:ok, [abc_num_range: 'C'], "", %{}, {1, 0}, 1} = T.abc_num_range("C")
+    assert {:ok, [abc_num_range: ~c"A"], "", %{}, {1, 0}, 1} = T.abc_num_range("A")
+    assert {:ok, [abc_num_range: ~c"B"], "", %{}, {1, 0}, 1} = T.abc_num_range("B")
+    assert {:ok, [abc_num_range: ~c"C"], "", %{}, {1, 0}, 1} = T.abc_num_range("C")
     assert {:error, _, _, _, _, _} = T.abc_num_range("D")
 
     assert {:ok, [a_e_x_num_sequence: ["AEX"]], "", %{}, {1, 0}, 3} = T.a_e_x_num_sequence("AEX")
   end
 
   test "concatenation" do
-    assert {:ok, [concat_a_a_1: 'AA'], "", %{}, {1, 0}, 2} = T.concat_a_a_1("AA")
+    assert {:ok, [concat_a_a_1: ~c"AA"], "", %{}, {1, 0}, 2} = T.concat_a_a_1("AA")
 
-    assert {:ok, [concat_a_a_2: [a_num_literal: 'A', a_num_literal: 'A']], "", %{}, {1, 0}, 2} =
+    assert {:ok, [concat_a_a_2: [a_num_literal: ~c"A", a_num_literal: ~c"A"]], "", %{}, {1, 0}, 2} =
              T.concat_a_a_2("AA")
 
     assert {:ok,
             [
               concat_range_sequence: [
-                abc_num_range: 'A',
+                abc_num_range: ~c"A",
                 a_e_x_num_sequence: ["AEX"]
               ]
             ], "", %{}, {1, 0}, 4} = T.concat_range_sequence("AAEX")
@@ -81,7 +81,7 @@ defmodule AbnfParsecTest do
     assert {:ok,
             [
               concat_range_sequence: [
-                abc_num_range: 'B',
+                abc_num_range: ~c"B",
                 a_e_x_num_sequence: ["AEX"]
               ]
             ], "", %{}, {1, 0}, 4} = T.concat_range_sequence("BAEX")
@@ -91,47 +91,47 @@ defmodule AbnfParsecTest do
   end
 
   test "alternation" do
-    assert {:ok, [a_or_b: 'A'], "", %{}, {1, 0}, 1} = T.a_or_b("A")
-    assert {:ok, [a_or_b: 'B'], "", %{}, {1, 0}, 1} = T.a_or_b("B")
+    assert {:ok, [a_or_b: ~c"A"], "", %{}, {1, 0}, 1} = T.a_or_b("A")
+    assert {:ok, [a_or_b: ~c"B"], "", %{}, {1, 0}, 1} = T.a_or_b("B")
   end
 
   test "repetition" do
-    assert {:ok, [three_a: 'AAA'], "", %{}, {1, 0}, 3} = T.three_a("AAA")
+    assert {:ok, [three_a: ~c"AAA"], "", %{}, {1, 0}, 3} = T.three_a("AAA")
 
-    assert {:ok, [zero_or_more_a: 'AAAA'], "", %{}, {1, 0}, 4} = T.zero_or_more_a("AAAA")
-    assert {:ok, [zero_or_more_a: ''], "", %{}, {1, 0}, 0} = T.zero_or_more_a("")
+    assert {:ok, [zero_or_more_a: ~c"AAAA"], "", %{}, {1, 0}, 4} = T.zero_or_more_a("AAAA")
+    assert {:ok, [zero_or_more_a: ~c""], "", %{}, {1, 0}, 0} = T.zero_or_more_a("")
 
-    assert {:ok, [min_3_a: 'AAA'], "", %{}, {1, 0}, 3} = T.min_3_a("AAA")
-    assert {:ok, [min_3_a: 'AAAA'], "", %{}, {1, 0}, 4} = T.min_3_a("AAAA")
+    assert {:ok, [min_3_a: ~c"AAA"], "", %{}, {1, 0}, 3} = T.min_3_a("AAA")
+    assert {:ok, [min_3_a: ~c"AAAA"], "", %{}, {1, 0}, 4} = T.min_3_a("AAAA")
     assert {:error, _, _, _, _, _} = T.min_3_a("AA")
 
-    assert {:ok, [max_3_a: 'AAA'], "", %{}, {1, 0}, 3} = T.max_3_a("AAA")
-    assert {:ok, [max_3_a: 'AA'], "", %{}, {1, 0}, 2} = T.max_3_a("AA")
-    assert {:ok, [max_3_a: 'AAA'], "A", %{}, {1, 0}, 3} = T.max_3_a("AAAA")
+    assert {:ok, [max_3_a: ~c"AAA"], "", %{}, {1, 0}, 3} = T.max_3_a("AAA")
+    assert {:ok, [max_3_a: ~c"AA"], "", %{}, {1, 0}, 2} = T.max_3_a("AA")
+    assert {:ok, [max_3_a: ~c"AAA"], "A", %{}, {1, 0}, 3} = T.max_3_a("AAAA")
 
-    assert {:ok, [min_1_max_2_a: 'A'], "", %{}, {1, 0}, 1} = T.min_1_max_2_a("A")
-    assert {:ok, [min_1_max_2_a: 'AA'], "", %{}, {1, 0}, 2} = T.min_1_max_2_a("AA")
+    assert {:ok, [min_1_max_2_a: ~c"A"], "", %{}, {1, 0}, 1} = T.min_1_max_2_a("A")
+    assert {:ok, [min_1_max_2_a: ~c"AA"], "", %{}, {1, 0}, 2} = T.min_1_max_2_a("AA")
     assert {:error, _, _, _, _, _} = T.min_1_max_2_a("")
-    assert {:ok, [min_1_max_2_a: 'AA'], "A", %{}, {1, 0}, 2} = T.min_1_max_2_a("AAA")
+    assert {:ok, [min_1_max_2_a: ~c"AA"], "A", %{}, {1, 0}, 2} = T.min_1_max_2_a("AAA")
   end
 
   test "comment" do
-    assert {:ok, [a_comment: 'A'], "", %{}, {1, 0}, 1} = T.a_comment("A")
-    assert {:ok, [a_multi_line_comment: 'A'], "", %{}, {1, 0}, 1} = T.a_multi_line_comment("A")
+    assert {:ok, [a_comment: ~c"A"], "", %{}, {1, 0}, 1} = T.a_comment("A")
+    assert {:ok, [a_multi_line_comment: ~c"A"], "", %{}, {1, 0}, 1} = T.a_multi_line_comment("A")
   end
 
   test "option" do
-    assert {:ok, [a_optional_b: 'AB'], "", %{}, {1, 0}, 2} = T.a_optional_b("AB")
-    assert {:ok, [a_optional_b: 'A'], "", %{}, {1, 0}, 1} = T.a_optional_b("A")
+    assert {:ok, [a_optional_b: ~c"AB"], "", %{}, {1, 0}, 2} = T.a_optional_b("AB")
+    assert {:ok, [a_optional_b: ~c"A"], "", %{}, {1, 0}, 1} = T.a_optional_b("A")
   end
 
   test "except" do
-    assert {:ok, [alpha_except_a: 'BC'], "", %{}, {1, 0}, 2} = T.alpha_except_a("BC")
+    assert {:ok, [alpha_except_a: ~c"BC"], "", %{}, {1, 0}, 2} = T.alpha_except_a("BC")
 
     assert {:error, "did not expect string \"A\"", "ABC", %{}, {1, 0}, 0} =
              T.alpha_except_a("ABC")
 
-    assert {:ok, [alpha_except_a_b_c: 'DEFXYZ'], "", %{}, {1, 0}, 6} =
+    assert {:ok, [alpha_except_a_b_c: ~c"DEFXYZ"], "", %{}, {1, 0}, 6} =
              T.alpha_except_a_b_c("DEFXYZ")
 
     assert {:error, "did not expect string \"A\" or ASCII character equal to 'B' or my_c", "A",

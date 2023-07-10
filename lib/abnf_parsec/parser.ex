@@ -90,7 +90,7 @@ defmodule AbnfParsec.Parser do
 
   numeric =
     ignore(string("%"))
-    |> ascii_string('xbd', 1)
+    |> ascii_string(~c"xbd", 1)
     |> unwrap_and_tag(:base)
     |> concat(number)
 
