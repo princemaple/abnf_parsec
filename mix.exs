@@ -1,13 +1,13 @@
 defmodule AbnfParsec.MixProject do
   use Mix.Project
 
-  @version "1.2.1"
+  @version "1.2.2"
 
   def project do
     [
       app: :abnf_parsec,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.14",
       deps: deps(),
       name: "AbnfParsec",
       description: "ABNF in, parser out",
