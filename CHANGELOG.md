@@ -1,6 +1,6 @@
 ## v1.2.3 - 2025-01-06
 
-###
+### Fixed
 
 - Generate utf8 matcher instead of ascii on num_range (c40c2b9) fix [#76](https://github.com/princemaple/abnf_parsec/issues/76)
 
