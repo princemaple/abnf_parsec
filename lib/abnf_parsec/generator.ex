@@ -181,7 +181,7 @@ defmodule AbnfParsec.Generator do
     num = base_num(num, base)
 
     quote do
-      ascii_char([unquote(num)])
+      utf8_char([unquote(num)])
     end
   end
 
@@ -190,7 +190,7 @@ defmodule AbnfParsec.Generator do
     b = base_num(b, base)
 
     quote do
-      ascii_char([unquote(a)..unquote(b)])
+      utf8_char([unquote(a)..unquote(b)])
     end
   end
 
