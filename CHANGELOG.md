@@ -1,3 +1,9 @@
+## v1.2.4 - 2025-01-28
+
+### 🐛 Bug Fixes
+
+- Fix nimble parsec deprecation warnings @sax (#82)
+
 ## v1.2.3 - 2025-01-06
 
 ### Fixed
