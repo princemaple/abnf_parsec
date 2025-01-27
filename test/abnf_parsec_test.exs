@@ -291,8 +291,8 @@ defmodule AbnfParsecTest do
           "y" => {:post_traverse, {:join, []}}
         }
 
-      defp join(_, args, context, _, _) do
-        {[Enum.join(args)], context}
+      defp join(rest, args, context, _, _) do
+        {rest, [Enum.join(args)], context}
       end
     end
 

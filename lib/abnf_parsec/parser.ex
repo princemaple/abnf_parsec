@@ -185,13 +185,13 @@ defmodule AbnfParsec.Parser do
     |> tag(:alternation)
     |> post_traverse({:flatten, []})
 
-  defp flatten(_, [{tag, [one]}], context, _, _)
+  defp flatten(rest, [{tag, [one]}], context, _, _)
        when tag in [:repetition, :concatenation, :alternation] do
-    {[one], context}
+    {rest, [one], context}
   end
 
-  defp flatten(_, args, context, _, _) do
-    {args, context}
+  defp flatten(rest, args, context, _, _) do
+    {rest, args, context}
   end
 
   elements = parsec(:alternation) |> repeat(c_wsp)
