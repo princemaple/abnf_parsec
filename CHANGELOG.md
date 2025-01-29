@@ -1,3 +1,9 @@
+## v1.2.5 - 2025-01-29
+
+### 🐛 Bug Fixes
+
+- Fix core rule HEXDIG to allow lowercase chars
+
 ## v1.2.4 - 2025-01-28
 
 ### 🐛 Bug Fixes
