@@ -8,6 +8,7 @@ defmodule AbnfParsecTest do
       my-alpha = ALPHA
       my-lwsp = LWSP
       my-my-sp = my-sp
+      my-hex = 1*HEXDIG
       abc-string = "abc"
       a-num-literal = %d65
       a-num-literal-binary = %b1000001
@@ -62,6 +63,13 @@ defmodule AbnfParsecTest do
     assert {:error, _, _, _, _, _} = T.abc_num_range("D")
 
     assert {:ok, [a_e_x_num_sequence: ["AEX"]], "", %{}, {1, 0}, 3} = T.a_e_x_num_sequence("AEX")
+  end
+
+  test "hexdig" do
+    assert {:ok, [my_hex: ~c"0123456789ABCDEFabcdef"], "", %{}, {1, 0}, 22} =
+             T.my_hex("0123456789ABCDEFabcdef")
+
+    assert {:error, _, _, _, _, _} = T.my_hex("ghijkl")
   end
 
   test "concatenation" do
