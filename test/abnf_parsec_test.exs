@@ -14,6 +14,7 @@ defmodule AbnfParsecTest do
       a-num-literal-binary = %b1000001
       abc-num-range = %x41-43
       a-e-x-num-sequence = %x41.45.58
+      unicode-seq = %x4f60.597d
       concat-a-a-1 = %x41 %x41
       concat-a-a-2 = a-num-literal a-num-literal
       concat-range-sequence = abc-num-range a-e-x-num-sequence
@@ -37,6 +38,7 @@ defmodule AbnfParsecTest do
       part-1 = *2(%x41 [3"B"])
       complex = part-1 SP part-2; do not blow up
       part-2 = 1*("C" / "D")
+
       """
   end
 
@@ -70,6 +72,10 @@ defmodule AbnfParsecTest do
              T.my_hex("0123456789ABCDEFabcdef")
 
     assert {:error, _, _, _, _, _} = T.my_hex("ghijkl")
+  end
+
+  test "unicode sequence" do
+    assert {:ok, [unicode_seq: ["你好"]], "", %{}, {1, 0}, 6} = T.unicode_seq("你好")
   end
 
   test "concatenation" do

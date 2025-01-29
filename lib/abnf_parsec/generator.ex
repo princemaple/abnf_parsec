@@ -195,10 +195,10 @@ defmodule AbnfParsec.Generator do
   end
 
   defp expand({:num_sequence, [{:base, base} | nums]}) do
-    nums = Enum.map(nums, &base_num(&1, base))
+    str = nums |> Enum.map(&base_num(&1, base)) |> to_string
 
     quote do
-      string(<<unquote_splicing(nums)>>)
+      string(unquote(str))
     end
   end
 
