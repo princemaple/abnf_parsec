@@ -1,3 +1,7 @@
+## v1.2.6 - 2025-01-29
+
+- support utf-8 codepoint sequence
+
 ## v1.2.5 - 2025-01-29
 
 ### 🐛 Bug Fixes
