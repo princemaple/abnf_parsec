@@ -35,7 +35,7 @@ defmodule AbnfParsec.Generator do
 
   defp define(rulename, definition, opts) do
     parsec_name = normalize_rulename(rulename)
-    definition = expand(definition)
+    definition = expand(definition, opts[:mode] || :text)
 
     definition = transform(definition, get_in(opts, [:transform, rulename]))
 
@@ -120,7 +120,7 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp expand(list) when is_list(list) do
+  defp expand(list, mode) when is_list(list) do
     [element] =
       list
       |> Enum.reject(fn
@@ -128,10 +128,10 @@ defmodule AbnfParsec.Generator do
         _ -> false
       end)
 
-    expand(element)
+    expand(element, mode)
   end
 
-  defp expand({:rulename, rulename}) do
+  defp expand({:rulename, rulename}, _mode) do
     parsec_name = normalize_rulename(rulename)
 
     quote do
@@ -139,7 +139,7 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp expand({:core, core_rule}) do
+  defp expand({:core, core_rule}, _mode) do
     parsec_name = normalize_rulename("core-" <> core_rule)
 
     quote do
@@ -147,15 +147,15 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp expand(<<_::utf8>> = string) do
-    expand({:case_sensitive, string})
+  defp expand(<<_::utf8>> = string, mode) do
+    expand({:case_sensitive, string}, mode)
   end
 
-  defp expand(string) when is_binary(string) do
-    expand({:case_insensitive, string})
+  defp expand(string, mode) when is_binary(string) do
+    expand({:case_insensitive, string}, mode)
   end
 
-  defp expand({:case_insensitive, string}) when is_binary(string) do
+  defp expand({:case_insensitive, string}, mode) when is_binary(string) do
     lower = String.downcase(string)
     upper = String.upcase(string)
 
@@ -166,45 +166,73 @@ defmodule AbnfParsec.Generator do
         {l, u} -> {:alternation, [{:case_sensitive, <<l>>}, {:case_sensitive, <<u>>}]}
       end)
 
+    concat = expand({:concatenation, insensitive}, mode)
+
     quote do
-      reduce(unquote(expand({:concatenation, insensitive})), {Enum, :join, []})
+      reduce(unquote(concat), {Enum, :join, []})
     end
   end
 
-  defp expand({:case_sensitive, string}) when is_binary(string) do
+  defp expand({:case_sensitive, string}, _mode) when is_binary(string) do
     quote do
       string(unquote(string))
     end
   end
 
-  defp expand({:num_literal, [{:base, base}, num]}) do
+  defp expand({:num_literal, [{:base, base}, num]}, mode) do
     num = base_num(num, base)
 
-    quote do
-      utf8_char([unquote(num)])
+    case mode do
+      :text ->
+        quote do
+          utf8_char([unquote(num)])
+        end
+
+      :byte ->
+        quote do
+          ascii_char([unquote(num)])
+        end
     end
   end
 
-  defp expand({:num_range, [{:base, base}, a, b]}) do
+  defp expand({:num_range, [{:base, base}, a, b]}, mode) do
     a = base_num(a, base)
     b = base_num(b, base)
 
-    quote do
-      utf8_char([unquote(a)..unquote(b)])
+    case mode do
+      :text ->
+        quote do
+          utf8_char([unquote(a)..unquote(b)])
+        end
+
+      :byte ->
+        quote do
+          ascii_char([unquote(a)..unquote(b)])
+        end
     end
   end
 
-  defp expand({:num_sequence, [{:base, base} | nums]}) do
-    str = nums |> Enum.map(&base_num(&1, base)) |> to_string
+  defp expand({:num_sequence, [{:base, base} | nums]}, mode) do
+    nums = Enum.map(nums, &base_num(&1, base))
 
-    quote do
-      string(unquote(str))
+    case mode do
+      :text ->
+        str = to_string(nums)
+
+        quote do
+          string(unquote(str))
+        end
+
+      :byte ->
+        quote do
+          string(<<unquote_splicing(nums)>>)
+        end
     end
   end
 
-  defp expand({:concatenation, elements}) do
+  defp expand({:concatenation, elements}, mode) do
     elements
-    |> Enum.map(&expand/1)
+    |> Enum.map(&expand(&1, mode))
     |> Enum.reduce(fn
       {:|>, _, _} = b, a ->
         Enum.reduce(
@@ -217,16 +245,16 @@ defmodule AbnfParsec.Generator do
     end)
   end
 
-  defp expand({:alternation, elements}) do
-    alternations = Enum.map(elements, &expand/1)
+  defp expand({:alternation, elements}, mode) do
+    alternations = Enum.map(elements, &expand(&1, mode))
 
     quote do
       choice(unquote(alternations))
     end
   end
 
-  defp expand({:repetition, [{:repeat, repeat}, repeated]}) do
-    repeated = expand(repeated)
+  defp expand({:repetition, [{:repeat, repeat}, repeated]}, mode) do
+    repeated = expand(repeated, mode)
 
     case repeat do
       [] ->
@@ -246,13 +274,15 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp expand({:option, element}) do
+  defp expand({:option, element}, mode) do
+    option = expand(element, mode)
+
     quote do
-      optional(unquote(expand(element)))
+      optional(unquote(option))
     end
   end
 
-  defp expand({:prose_val, _}) do
+  defp expand({:prose_val, _}, _mode) do
     quote do
       ascii_string([{:not, ?\r}, {:not, ?\n}], min: 0)
     end
@@ -260,9 +290,9 @@ defmodule AbnfParsec.Generator do
 
   # Extension: Used in RFC3501
 
-  defp expand({:exception, [range | exceptions]}) do
-    except = Enum.map(exceptions, &expand/1)
-    proceed = expand(range)
+  defp expand({:exception, [range | exceptions]}, mode) do
+    except = Enum.map(exceptions, &expand(&1, mode))
+    proceed = expand(range, mode)
 
     lookahead =
       case except do
