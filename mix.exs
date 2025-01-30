@@ -7,7 +7,7 @@ defmodule AbnfParsec.MixProject do
     [
       app: :abnf_parsec,
       version: @version,
-      elixir: "~> 1.15",
+      elixir: "~> 1.14",
       deps: deps(),
       name: "AbnfParsec",
       description: "ABNF in, parser out",
