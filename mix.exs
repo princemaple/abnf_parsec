@@ -48,7 +48,8 @@ defmodule AbnfParsec.MixProject do
       source_ref: "v#{@version}",
       main: "AbnfParsec",
       canonical: "http://hexdocs.pm/abnf_parsec",
-      source_url: "https://github.com/princemaple/abnf_parsec"
+      source_url: "https://github.com/princemaple/abnf_parsec",
+      extras: ["CHANGELOG.md", "README.md"]
     ]
   end
 end
