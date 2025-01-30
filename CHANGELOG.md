@@ -1,3 +1,7 @@
+## v1.3.0 - 2025-01-30
+
+- Add byte mode to generate parsers that work on byte representation instead of text codepoints
+
 ## v1.2.6 - 2025-01-29
 
 - support utf-8 codepoint sequence

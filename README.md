@@ -32,6 +32,46 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/abnf_parsec](https://hexdocs.pm/abnf_parsec).
 
+## Text / Byte mode
+
+Literals in ABNF could be used to describe either the text codepoints or the byte representation.
+There is no clear distinction between them. Hence a text / byte mode is added for user to set.
+
+```elixir
+defmodule TextParser do
+  use AbnfParsec,
+    mode: :text, # the default, can be omitted
+    abnf: """
+    ucschar = %xA0-D7FF / %xF900-FDCF / %xFDF0-FFEF
+      / %x10000-1FFFD / %x20000-2FFFD / %x30000-3FFFD
+      / %x40000-4FFFD / %x50000-5FFFD / %x60000-6FFFD
+      / %x70000-7FFFD / %x80000-8FFFD / %x90000-9FFFD
+      / %xA0000-AFFFD / %xB0000-BFFFD / %xC0000-CFFFD
+      / %xD0000-DFFFD / %xE1000-EFFFD
+    """
+end
+
+defmodule ByteParser do
+  use AbnfParsec,
+    mode: :byte,
+    abnf: """
+    ; from RFC 5322 + UTF8-non-ascii
+    atext = ALPHA / DIGIT / "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" /
+      "-" / "/" / "=" / "?" / "^" / "_" / "`" / "{" / "|" / "}" / "~" / UTF8-non-ascii
+
+    ; from RFC 3629
+    UTF8-non-ascii  =   UTF8-2 / UTF8-3 / UTF8-4
+
+    UTF8-2      = %xC2-DF UTF8-tail
+    UTF8-3      = %xE0 %xA0-BF UTF8-tail / %xE1-EC 2( UTF8-tail ) /
+          %xED %x80-9F UTF8-tail / %xEE-EF 2( UTF8-tail )
+    UTF8-4      = %xF0 %x90-BF 2( UTF8-tail ) / %xF1-F3 3( UTF8-tail ) /
+          %xF4 %x80-8F 2( UTF8-tail )
+    UTF8-tail   = %x80-BF
+    """
+end
+```
+
 ## Usage
 
 ```elixir
