@@ -34,8 +34,9 @@ be found at [https://hexdocs.pm/abnf_parsec](https://hexdocs.pm/abnf_parsec).
 
 ## Text / Byte mode
 
-Literals in ABNF could be used to describe either the text codepoints or the byte representation.
-There is no clear distinction between them. Hence a text / byte mode is added for user to set.
+In some RFCs, literals in ABNF could be used to describe the byte representation instead of
+the text codepoints. There is no clear distinction between them for us to detect automatically.
+Hence a text / byte mode is added for the user to set.
 
 ```elixir
 defmodule TextParser do
