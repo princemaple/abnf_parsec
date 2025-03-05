@@ -28,12 +28,9 @@ defmodule AbnfParsec.Generator do
         rulename in required_rulenames
       end)
 
-    (required_core_rules ++ rulelist)
-    |> Enum.reject(&match?({:comment, _}, &1))
-    |> Task.async_stream(fn {:rule, [{:rulename, rulename} | definition]} ->
+    for {:rule, [{:rulename, rulename} | definition]} <- required_core_rules ++ rulelist do
       define(rulename, definition, opts)
-    end)
-    |> Enum.map(fn {:ok, defn} -> defn end)
+    end
   end
 
   defp define(rulename, definition, opts) do
