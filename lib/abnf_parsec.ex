@@ -142,8 +142,6 @@ defmodule AbnfParsec do
     quote do
       import NimbleParsec
 
-      unquote(Generator.core())
-
       unquote(code)
 
       if unquote(parse) do

@@ -45,8 +45,8 @@ defmodule AbnfParsecTest do
   test "core" do
     assert {:ok, [my_sp: [" "]], "", %{}, {1, 0}, 1} = T.my_sp(" ")
     assert {:ok, [my_my_sp: [my_sp: [" "]]], "", %{}, {1, 0}, 1} = T.my_my_sp(" ")
-    assert {:ok, [my_alpha: ~c"a"], "", %{}, {1, 0}, 1} = T.my_alpha("a")
-    assert {:ok, [my_lwsp: ~c"    "], "", %{}, {1, 0}, 4} = T.my_lwsp("    ")
+    assert {:ok, [my_alpha: ["a"]], "", %{}, {1, 0}, 1} = T.my_alpha("a")
+    assert {:ok, [my_lwsp: ["    "]], "", %{}, {1, 0}, 4} = T.my_lwsp("    ")
   end
 
   test "char_val" do
@@ -68,8 +68,8 @@ defmodule AbnfParsecTest do
   end
 
   test "hexdig" do
-    assert {:ok, [my_hex: ~c"0123456789ABCDEFabcdef"], "", %{}, {1, 0}, 22} =
-             T.my_hex("0123456789ABCDEFabcdef")
+    assert {:ok, [my_hex: String.split("0123456789ABCDEFabcdef", "", trim: true)], "", %{},
+            {1, 0}, 22} == T.my_hex("0123456789ABCDEFabcdef")
 
     assert {:error, _, _, _, _, _} = T.my_hex("ghijkl")
   end
@@ -140,16 +140,18 @@ defmodule AbnfParsecTest do
   end
 
   test "except" do
-    assert {:ok, [alpha_except_a: ~c"BC"], "", %{}, {1, 0}, 2} = T.alpha_except_a("BC")
+    assert {:ok, [alpha_except_a: ["B", "C"]], "", %{}, {1, 0}, 2} =
+             T.alpha_except_a("BC")
 
-    assert {:error, "did not expect string \"A\"", "ABC", %{}, {1, 0}, 0} =
+    assert {:error, "did not expect string \"a\" or string \"A\"", "ABC", %{}, {1, 0}, 0} =
              T.alpha_except_a("ABC")
 
-    assert {:ok, [alpha_except_a_b_c: ~c"DEFXYZ"], "", %{}, {1, 0}, 6} =
+    assert {:ok, [alpha_except_a_b_c: ["D", "E", "F", "X", "Y", "Z"]], "", %{}, {1, 0}, 6} =
              T.alpha_except_a_b_c("DEFXYZ")
 
-    assert {:error, "did not expect string \"A\" or utf8 codepoint equal to \"B\" or my_c", "A",
-            %{}, {1, 0}, 0} = T.alpha_except_a_b_c("A")
+    assert {:error,
+            "did not expect string \"a\" or string \"A\" or utf8 codepoint equal to \"B\" or my_c",
+            "A", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("A")
 
     assert {:error, _, "B", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("B")
     assert {:error, _, "C", %{}, {1, 0}, 0} = T.alpha_except_a_b_c("C")
@@ -248,32 +250,31 @@ defmodule AbnfParsecTest do
   import ExUnit.CaptureIO
 
   test "skip" do
-    assert "[[]]\n" ==
-             capture_io(fn ->
-               defmodule S do
-                 use AbnfParsec,
-                   abnf: """
-                   a = "a"
-                     ; just a
-                   """,
-                   skip: ["a"],
-                   debug: true
-               end
-             end)
+    refute capture_io(fn ->
+             defmodule S do
+               use AbnfParsec,
+                 abnf: """
+                 a = "a"
+                   ; just a
+                 """,
+                 skip: ["a"],
+                 debug: true
+             end
+           end) =~ "defparsec(:a,"
   end
 
   test "debugging" do
-    assert "[defparsec(:a, tag(string(\"a\"), :a))]\n" ==
-             capture_io(fn ->
-               defmodule D do
-                 use AbnfParsec,
-                   abnf: """
-                   a = "a"
-                     ; just a
-                   """,
-                   debug: true
-               end
-             end)
+    assert capture_io(fn ->
+             defmodule D do
+               use AbnfParsec,
+                 abnf: """
+                 a = "a"
+                   ; just a
+                 """,
+                 debug: true
+             end
+           end) =~
+             "defparsec(:a, tag(reduce(choice([string(\"a\"), string(\"A\")]), {Enum, :join, []}), :a))"
   end
 
   test "customization" do
@@ -306,10 +307,10 @@ defmodule AbnfParsecTest do
         }
 
       defp join(rest, args, context, _, _) do
-        {rest, [Enum.join(args)], context}
+        {rest, [args |> Enum.reverse() |> Enum.join()], context}
       end
     end
 
-    assert {:ok, [y: ["515049-5049-49"]], "", %{}, {1, 0}, 8} = Y.y("1-12-123")
+    assert {:ok, [y: ["1-12-123"]], "", %{}, {1, 0}, 8} = Y.y("1-12-123")
   end
 end

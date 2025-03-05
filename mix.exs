@@ -37,7 +37,7 @@ defmodule AbnfParsec.MixProject do
 
   defp package do
     [
-      files: ~w(lib mix.exs README* LICENSE* CHANGELOG*),
+      files: ~w(lib priv mix.exs README* LICENSE* CHANGELOG*),
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/princemaple/abnf_parsec"}
     ]

@@ -1,43 +1,46 @@
 defmodule AbnfParsec.Generator do
   @moduledoc false
 
-  core_parsecs =
-    quote do
-      defparsecp :core_alpha, ascii_char([?A..?Z, ?a..?z])
-      defparsecp :core_bit, ascii_char([?0, ?1])
-      defparsecp :core_char, ascii_char([0x01..0x7F])
-      defparsecp :core_cr, ascii_char([?\r])
-      defparsecp :core_crlf, string("\r\n")
-      defparsecp :core_ctl, ascii_char([0x00..0x1F])
-      defparsecp :core_digit, ascii_char([?0..?9])
-      defparsecp :core_dquote, string("\"")
-      defparsecp :core_hexdig, ascii_char([?0..?9, ?A..?F, ?a..?f])
-      defparsecp :core_htab, string("\t")
-      defparsecp :core_lf, string("\n")
-      defparsecp :core_lwsp, repeat(optional(string("\r\n")) |> ascii_char([?\s, ?\t]))
-      defparsecp :core_octet, ascii_char([0x00..0xFF])
-      defparsecp :core_sp, string(" ")
-      defparsecp :core_vchar, ascii_char([0x21..0x7E])
-      defparsecp :core_wsp, ascii_char([?\s, ?\t])
-    end
+  @external_resource Path.join(:code.priv_dir(:abnf_parsec), "core.abnf")
 
-  @core core_parsecs
+  @core_rules AbnfParsec.Parser.parse!(File.read!(@external_resource))
 
-  def core do
-    @core
-  end
+  core_rulenames =
+    Enum.map(
+      @core_rules,
+      fn {:rule, [{:rulename, rulename} | _definition]} ->
+        rulename
+      end
+    )
+
+  @core_rulenames core_rulenames
 
   def generate(rulelist, opts) do
-    for {:rule, [{:rulename, rulename} | definition]} <- rulelist do
+    required_rulenames =
+      @core_rulenames --
+        for(
+          {:rule, [{:rulename, rulename} | _definition]} <- rulelist,
+          do: String.upcase(rulename)
+        )
+
+    required_core_rules =
+      Enum.filter(@core_rules, fn {:rule, [{:rulename, rulename} | _definition]} ->
+        rulename in required_rulenames
+      end)
+
+    (required_core_rules ++ rulelist)
+    |> Enum.reject(&match?({:comment, _}, &1))
+    |> Task.async_stream(fn {:rule, [{:rulename, rulename} | definition]} ->
       define(rulename, definition, opts)
-    end
+    end)
+    |> Enum.map(fn {:ok, defn} -> defn end)
   end
 
   defp define(rulename, definition, opts) do
     parsec_name = normalize_rulename(rulename)
     definition = expand(definition, opts[:mode] || :text)
 
-    definition = transform(definition, get_in(opts, [:transform, rulename]))
+    definition = transform(rulename, definition, get_in(opts, [:transform, rulename]))
 
     definition =
       cond do
@@ -53,6 +56,11 @@ defmodule AbnfParsec.Generator do
         rulename in Map.get(opts, :unbox, []) ->
           definition
 
+        rulename in @core_rulenames ->
+          # unbox core rules by default to achieve backwards compatibility
+          # TODO: maybe leave this to users or make it configurable
+          definition
+
         true ->
           Macro.pipe(definition, quote(do: tag(unquote(parsec_name))), 0)
       end
@@ -66,15 +74,20 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp transform(definition, []) do
-    definition
+  defp transform(rulename, definition, transformations) do
+    transformations =
+      if is_nil(transformations) and rulename in @core_rulenames do
+        # transform core rules by default for convenience
+        # TODO: maybe leave this to users or make it configurable
+        [{:reduce, {List, :to_string, []}}]
+      else
+        List.wrap(transformations)
+      end
+
+    Enum.reduce(transformations, definition, &do_transform/2)
   end
 
-  defp transform(definition, [transformation | more]) do
-    definition |> transform(transformation) |> transform(more)
-  end
-
-  defp transform(definition, transformation) do
+  defp do_transform(transformation, definition) do
     case transformation do
       {:reduce, mfa} ->
         Macro.pipe(definition, quote(do: reduce(unquote(Macro.escape(mfa)))), 0)
@@ -121,13 +134,7 @@ defmodule AbnfParsec.Generator do
   end
 
   defp expand(list, mode) when is_list(list) do
-    [element] =
-      list
-      |> Enum.reject(fn
-        {:comment, _} -> true
-        _ -> false
-      end)
-
+    [element] = Enum.reject(list, &match?({:comment, _}, &1))
     expand(element, mode)
   end
 
@@ -139,15 +146,7 @@ defmodule AbnfParsec.Generator do
     end
   end
 
-  defp expand({:core, core_rule}, _mode) do
-    parsec_name = normalize_rulename("core-" <> core_rule)
-
-    quote do
-      parsec(unquote(parsec_name))
-    end
-  end
-
-  defp expand(<<_::utf8>> = string, mode) do
+  defp expand(<<char::utf8>> = string, mode) when char not in ?a..?z and char not in ?A..?Z do
     expand({:case_sensitive, string}, mode)
   end
 

@@ -3,18 +3,6 @@ defmodule AbnfParsec.ParserTest do
 
   alias AbnfParsec.Parser
 
-  test "parse core rules" do
-    "ALPHA DIGIT HEXDIG DQUOTE SP HTAB WSP LWSP VCHAR CHAR OCTET CTL CR LF CRLF BIT"
-    |> String.split()
-    |> Enum.each(fn rule ->
-      assert {:ok, [core: ^rule], "", %{}, {1, 0}, _} = Parser.core_rule(rule)
-    end)
-
-    assert {:error, _, _, _, _, _} = Parser.core_rule("CHAR8")
-    assert {:error, _, _, _, _, _} = Parser.core_rule("ALPHA-")
-    assert {:error, _, _, _, _, _} = Parser.core_rule("DIGITTT")
-  end
-
   test "parse comment" do
     assert {:ok, [comment: "abc"], "", %{}, {2, 7}, 7} = Parser.comment("; abc\r\n")
   end
@@ -91,9 +79,9 @@ defmodule AbnfParsec.ParserTest do
     assert {:ok,
             [
               exception: [
-                {:core, "CHAR"},
+                {:rulename, "CHAR"},
                 "A",
-                {:core, "DQUOTE"},
+                {:rulename, "DQUOTE"},
                 {:num_literal, [{:base, "x"}, "42"]},
                 {:rulename, "some-rule"}
               ]

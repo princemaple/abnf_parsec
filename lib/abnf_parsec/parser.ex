@@ -7,45 +7,7 @@ defmodule AbnfParsec.Parser do
   Abnf Parser.
   """
 
-  alpha = string("ALPHA") |> unwrap_and_tag(:core)
-  digit = string("DIGIT") |> unwrap_and_tag(:core)
-  hexdig = string("HEXDIG") |> unwrap_and_tag(:core)
-  dquote = string("DQUOTE") |> unwrap_and_tag(:core)
-  sp = string("SP") |> unwrap_and_tag(:core)
-  htab = string("HTAB") |> unwrap_and_tag(:core)
-  wsp = string("WSP") |> unwrap_and_tag(:core)
-  lwsp = string("LWSP") |> unwrap_and_tag(:core)
-  vchar = string("VCHAR") |> unwrap_and_tag(:core)
-  char = string("CHAR") |> unwrap_and_tag(:core)
-  octet = string("OCTET") |> unwrap_and_tag(:core)
-  ctl = string("CTL") |> unwrap_and_tag(:core)
-  crlf = string("CRLF") |> unwrap_and_tag(:core)
-  cr = string("CR") |> unwrap_and_tag(:core)
-  lf = string("LF") |> unwrap_and_tag(:core)
-  bit = string("BIT") |> unwrap_and_tag(:core)
-
   rulename_tail = ascii_char([?0..?9, ?a..?z, ?A..?Z, ?-])
-
-  core_rule =
-    choice([
-      alpha,
-      digit,
-      hexdig,
-      dquote,
-      sp,
-      htab,
-      wsp,
-      lwsp,
-      vchar,
-      char,
-      octet,
-      ctl,
-      crlf,
-      cr,
-      lf,
-      bit
-    ])
-    |> lookahead_not(rulename_tail)
 
   help_space = ascii_string([?\s, ?\t], min: 1)
 
@@ -143,7 +105,6 @@ defmodule AbnfParsec.Parser do
 
   element =
     choice([
-      parsec(:core_rule),
       parsec(:rulename),
       parsec(:group),
       parsec(:option),
@@ -238,7 +199,6 @@ defmodule AbnfParsec.Parser do
   defparsec :concatenation, concatenation
   defparsec :alternation, alternation
   defparsec :char_val, char_val
-  defparsec :core_rule, core_rule
   defparsec :prose_val, prose_val
   defparsec :element, element
   defparsec :rule, rule
@@ -253,7 +213,6 @@ defmodule AbnfParsec.Parser do
 
   defcombinatorp :rulename_or_char,
                  choice([
-                   parsec(:core_rule),
                    parsec(:rulename),
                    parsec(:one_char_string_literal),
                    parsec(:num_literal)
@@ -262,10 +221,7 @@ defmodule AbnfParsec.Parser do
   exception =
     ignore(string("<any"))
     |> parsec(:ignore_c_wsp)
-    |> choice([
-      parsec(:core_rule),
-      parsec(:rulename)
-    ])
+    |> parsec(:rulename)
     |> parsec(:ignore_c_wsp)
     |> ignore(string("except"))
     |> parsec(:ignore_c_wsp)
