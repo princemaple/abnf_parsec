@@ -1,3 +1,18 @@
+## v2.0.0 - 2025-03-05
+
+### Highlights 🎉
+
+- Core rules are no longer special-cased, they are brought in via parsing and compiling `core.abnf`
+  - hence they can now be transformed, ignored, just like other rules
+- Core rules are now all transformed to string format by default
+  - so when matching `*HEXDIG` on `"1A"`, instead of getting `[49, 65]`, you get `["1", "A"]`
+  - however, performing `List.to_string` on either one gives you the same result - `"1A"`
+- Core rules are defined only when they are not already defined in your abnf
+  - if they are already defined in your abnf, they will be skipped
+  - note the way we generate the functions unifies cases, so if you have `char` defined,
+    the core rule `CHAR` will be ignored as well
+  - this also makes it possible to override core rules
+
 ## v1.3.0 - 2025-01-30
 
 - Add byte mode to generate parsers that work on byte representation instead of text codepoints
@@ -47,25 +62,5 @@ Now strings default to be case insensitive
 
 Not much, just that it's stable enough
 
-- handle 0 repeat @princemaple (#15)
-
-## v0.1.2 - 2020-03-06
-
-### Added
-
-- `pre/post_traverse` transformation
-
-## v0.1.1 - 2020-02-10
-
-### Changed
-
-- Require Elixir 1.10
-
-### Added
-
-- Allow adding extra UTF8 range to comments
-  - `test/fixture/dhall.abnf` has this line `; "∀" / "forall"`
-
-## v0.1.0 - 2020-02-09
-
-Initial release
+--------------------
+[pre-1.0 CHANGELOG](https://github.com/princemaple/abnf_parsec/blob/v1.0.0/CHANGELOG.md)
