@@ -23,7 +23,7 @@ and can be installed by adding `abnf_parsec` to your list of dependencies in `mi
 ```elixir
 def deps do
   [
-    {:abnf_parsec, "~> 1.0", runtime: false}
+    {:abnf_parsec, "~> 2.0", runtime: false}
   ]
 end
 ```
@@ -505,7 +505,7 @@ into
 ]
 ```
 
-And generated parser looks like:
+And generated parser looks something like (outdated but close enough):
 
 ```elixir
 [
