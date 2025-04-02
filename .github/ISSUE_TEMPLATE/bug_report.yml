@@ -8,8 +8,8 @@ body:
       label: ABNF Parsec version
       description: Which version is being used in your project?
       placeholder: '2.0.0'
-      validations:
-        required: true
+    validations:
+      required: true
   - type: textarea
     id: platform
     attributes:
