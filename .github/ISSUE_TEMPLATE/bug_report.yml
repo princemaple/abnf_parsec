@@ -1,0 +1,25 @@
+name: Bug Report
+description: Template for bugs
+labels: bug
+body:
+  - type: input
+    id: version
+    attributes:
+      label: ABNF Parsec version
+      description: Which version is being used in your project?
+      placeholder: '2.0.0'
+      validations:
+        required: true
+  - type: textarea
+    id: platform
+    attributes:
+      label: Platform versions
+      description: Elixir, Erlang OTP, and OS version if you think is relevant
+      placeholder: |
+        elixir: 1.18.2
+        erlang-otp: 28.0
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug
+      description: What errors or wrong behaviors are you seeing?
