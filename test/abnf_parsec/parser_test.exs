@@ -148,8 +148,8 @@ defmodule AbnfParsec.ParserTest do
               rule: [
                 {:rulename, "a"},
                 "1",
-                {:comment, "a = 1"},
-                {:comment, "b does not exist"}
+                {:comment, " a = 1"},
+                {:comment, " b does not exist"}
               ]
             ], "", %{}, {4, 46},
             46} =
@@ -215,17 +215,317 @@ defmodule AbnfParsec.ParserTest do
     assert Parser.parse!(File.read!("test/fixture/abnf.abnf"))
   end
 
+  describe "RFC 5234 comment and whitespace tests" do
+    test "1. comment at the end of a simple rule definition" do
+      abnf = "rule1 = %x41 ; This is rule ALPHA\r\n"
+      expected_ast = [
+        rule: [
+          rulename: "rule1",
+          num_literal: [{:base, "x"}, "41"],
+          comment: " This is rule ALPHA"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "2. comment at the end of a rule with alternation" do
+      abnf = "rule2 = \"a\" / \"b\" ; choose a or b\r\n"
+      expected_ast = [
+        rule: [
+          rulename: "rule2",
+          alternation: ["a", "b"],
+          comment: " choose a or b"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "3. comment at the end of a rule with concatenation" do
+      abnf = "rule3 = \"c\" \"d\" ; c followed by d\r\n"
+      expected_ast = [
+        rule: [
+          rulename: "rule3",
+          concatenation: ["c", "d"],
+          comment: " c followed by d"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "4a. comment at the end of a group" do
+      abnf = "rule4 = (\"e\" / \"f\") ; group comment\r\n"
+      expected_ast = [
+        rule: [
+          rulename: "rule4",
+          alternation: ["e", "f"],
+          comment: " group comment"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "4b. comment at the end of a group with preceding defined rules" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule5 = (ALPHA BETA) ; альфа бета
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule5",
+          concatenation: [rulename: "ALPHA", rulename: "BETA"],
+          comment: " альфа бета"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "5a. comment at the end of an option" do
+      abnf = "rule6 = [\"g\"] ; optional g\r\n"
+      expected_ast = [
+        rule: [
+          rulename: "rule6",
+          option: ["g"],
+          comment: " optional g"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "5b. comment at the end of an option with preceding defined rules" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule7 = [ALPHA BETA] ; optional alpha beta
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule7",
+          option: [concatenation: [rulename: "ALPHA", rulename: "BETA"]],
+          comment: " optional alpha beta"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "6. multiple comments in a complex rule" do
+      # Comments consumed by c_wsp within elements are collected.
+      # The final comment is consumed by the rule's trailing c_nl.
+      abnf = """
+      e1 = %x61
+      e2 = %x62
+      e3 = %x63
+      e4 = %x64
+      rComplex = e1 ; c1 for e1 (elem line)
+                 e2 / e3 ; c2 for e2/e3 (elem line)
+                 e4 ; c3 for e4 (final elem line)
+      """
+      expected_ast = [
+        rule: [rulename: "e1", num_literal: [{:base, "x"}, "61"]],
+        rule: [rulename: "e2", num_literal: [{:base, "x"}, "62"]],
+        rule: [rulename: "e3", num_literal: [{:base, "x"}, "63"]],
+        rule: [rulename: "e4", num_literal: [{:base, "x"}, "64"]],
+        rule: [
+          rulename: "rComplex",
+          # elements contains: e1, then c1, then (e2/e3), then c2, then e4
+          # then the rule's final c_nl captures c3
+          concatenation: [rulename: "e1", alternation: [rulename: "e2", rulename: "e3"], rulename: "e4"],
+          comment: " c1 for e1 (elem line)", # From c_wsp after e1
+          comment: " c2 for e2/e3 (elem line)", # From c_wsp after e2/e3
+          comment: " c3 for e4 (final elem line)" # From rule's final c_nl
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "4c. comment between concatenated elements in a group is ignored" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule_group_internal_concat = (ALPHA ; ignored internal comment
+        BETA) ; captured final comment
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule_group_internal_concat",
+          concatenation: [rulename: "ALPHA", rulename: "BETA"],
+          comment: " captured final comment"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "4d. comment before slash in group alternation is ignored" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule_group_internal_alt_b4_slash = (ALPHA ; ignored internal comment
+        / BETA) ; captured final comment
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule_group_internal_alt_b4_slash",
+          alternation: [rulename: "ALPHA", rulename: "BETA"],
+          comment: " captured final comment"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "4e. comment after slash in group alternation is ignored" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule_group_internal_alt_after_slash = (ALPHA / ; ignored internal comment
+        BETA) ; captured final comment
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule_group_internal_alt_after_slash",
+          alternation: [rulename: "ALPHA", rulename: "BETA"],
+          comment: " captured final comment"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "5c. comment between concatenated elements in an option is ignored" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule_opt_internal_concat = [ALPHA ; ignored internal comment
+        BETA] ; captured final comment
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule_opt_internal_concat",
+          option: [concatenation: [rulename: "ALPHA", rulename: "BETA"]],
+          comment: " captured final comment"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "5d. comment before slash in option alternation is ignored" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule_opt_internal_alt_b4_slash = [ALPHA ; ignored internal comment
+        / BETA] ; captured final comment
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule_opt_internal_alt_b4_slash",
+          option: [alternation: [rulename: "ALPHA", rulename: "BETA"]],
+          comment: " captured final comment"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "5e. comment after slash in option alternation is ignored" do
+      abnf = """
+      ALPHA = %x41
+      BETA = %x42
+      rule_opt_internal_alt_after_slash = [ALPHA / ; ignored internal comment
+        BETA] ; captured final comment
+      """
+      expected_ast = [
+        rule: [rulename: "ALPHA", num_literal: [{:base, "x"}, "41"]],
+        rule: [rulename: "BETA", num_literal: [{:base, "x"}, "42"]],
+        rule: [
+          rulename: "rule_opt_internal_alt_after_slash",
+          option: [alternation: [rulename: "ALPHA", rulename: "BETA"]],
+          comment: " captured final comment"
+        ]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+
+    test "7. comment-only lines between rules" do
+      abnf = """
+      rule9 = "x"
+      ; this is a comment line
+      ; and another one
+      rule10 = "y"
+      """
+      # Comments between rules are captured as separate items in the rulelist
+      expected_ast = [
+        rule: [rulename: "rule9", "x"],
+        comment: " this is a comment line",
+        comment: " and another one",
+        rule: [rulename: "rule10", "y"]
+      ]
+      assert {:ok, ast, "", %{}, _, _} = Parser.parse(abnf)
+      assert ast == expected_ast
+    end
+  end
+
+  describe "parse errors for comments and whitespace" do
+    test "8. CNL alone is not 1*c-wsp for concatenation" do
+      # This rule is malformed because "b" needs leading WSP on its line
+      # if the preceding line was a comment-newline (CNL) for correct concatenation.
+      abnf = "malformed = \"a\" ; comment\r\n\"b\"\r\n"
+      assert {:error, %AbnfParsec.UnexpectedTokenError{token: "\"b\"", line: 2}, _, _, _, _} =
+               Parser.parse(abnf)
+
+      abnf2 = "malformed2 = \"a\" ; comment\n\"b\"\n"
+      assert {:error, %AbnfParsec.UnexpectedTokenError{token: "\"b\"", line: 2}, _, _, _, _} =
+               Parser.parse(abnf2)
+
+      # This one should be OK because there's WSP after CNL
+      good_abnf = "still_good = \"a\" ; comment\r\n \"b\"\r\n"
+      expected_ast_good = [
+        rule: [
+          rulename: "still_good",
+          concatenation: ["a", "b"],
+          comment: " comment" # The comment from the CNL WSP part
+        ]
+      ]
+      assert {:ok, ast_good, "", %{}, _, _} = Parser.parse(good_abnf)
+      assert ast_good == expected_ast_good
+    end
+  end
+
   test "extra utf8 range" do
     assert Application.get_env(:abnf_parsec, :extra_utf8_range) == [0x2190..0x21FF]
 
     assert [
-             comment: "U+219x  ←   ↑   →   ↓   ↔   ↕   ↖   ↗   ↘   ↙   ↚   ↛   ↜   ↝   ↞   ↟",
-             comment: "U+21Ax  ↠   ↡   ↢   ↣   ↤   ↥   ↦   ↧   ↨   ↩   ↪   ↫   ↬   ↭   ↮   ↯",
-             comment: "U+21Bx  ↰   ↱   ↲   ↳   ↴   ↵   ↶   ↷   ↸   ↹   ↺   ↻   ↼   ↽   ↾   ↿",
-             comment: "U+21Cx  ⇀   ⇁   ⇂   ⇃   ⇄   ⇅   ⇆   ⇇   ⇈   ⇉   ⇊   ⇋   ⇌   ⇍   ⇎   ⇏",
-             comment: "U+21Dx  ⇐   ⇑   ⇒   ⇓   ⇔   ⇕   ⇖   ⇗   ⇘   ⇙   ⇚   ⇛   ⇜   ⇝   ⇞   ⇟",
-             comment: "U+21Ex  ⇠   ⇡   ⇢   ⇣   ⇤   ⇥   ⇦   ⇧   ⇨   ⇩   ⇪   ⇫   ⇬   ⇭   ⇮   ⇯",
-             comment: "U+21Fx  ⇰   ⇱   ⇲   ⇳   ⇴   ⇵   ⇶   ⇷   ⇸   ⇹   ⇺   ⇻   ⇼   ⇽   ⇾   ⇿",
+             comment: " U+219x  ←   ↑   →   ↓   ↔   ↕   ↖   ↗   ↘   ↙   ↚   ↛   ↜   ↝   ↞   ↟",
+             comment: " U+21Ax  ↠   ↡   ↢   ↣   ↤   ↥   ↦   ↧   ↨   ↩   ↪   ↫   ↬   ↭   ↮   ↯",
+             comment: " U+21Bx  ↰   ↱   ↲   ↳   ↴   ↵   ↶   ↷   ↸   ↹   ↺   ↻   ↼   ↽   ↾   ↿",
+             comment: " U+21Cx  ⇀   ⇁   ⇂   ⇃   ⇄   ⇅   ⇆   ⇇   ⇈   ⇉   ⇊   ⇋   ⇌   ⇍   ⇎   ⇏",
+             comment: " U+21Dx  ⇐   ⇑   ⇒   ⇓   ⇔   ⇕   ⇖   ⇗   ⇘   ⇙   ⇚   ⇛   ⇜   ⇝   ⇞   ⇟",
+             comment: " U+21Ex  ⇠   ⇡   ⇢   ⇣   ⇤   ⇥   ⇦   ⇧   ⇨   ⇩   ⇪   ⇫   ⇬   ⇭   ⇮   ⇯",
+             comment: " U+21Fx  ⇰   ⇱   ⇲   ⇳   ⇴   ⇵   ⇶   ⇷   ⇸   ⇹   ⇺   ⇻   ⇼   ⇽   ⇾   ⇿",
              rule: [{:rulename, "a"}, "a"]
            ] =
              Parser.parse!("""
