@@ -313,4 +313,29 @@ defmodule AbnfParsecTest do
 
     assert {:ok, [y: ["1-12-123"]], "", %{}, {1, 0}, 8} = Y.y("1-12-123")
   end
+
+  test "private parsecs" do
+    defmodule P do
+      use AbnfParsec,
+        abnf: """
+        a-or-b = %x41 / %x42
+        """,
+        private: true
+
+      def parse(input) do
+        case a_or_b(input) do
+          {:ok, parsed, "", _, _, _} -> {:ok, parsed}
+          _ -> :error
+        end
+      end
+    end
+
+    assert {:ok, [a_or_b: ~c"A"]} = P.parse("A")
+    assert {:ok, [a_or_b: ~c"B"]} = P.parse("B")
+    assert :error = P.parse("C")
+
+    assert_raise UndefinedFunctionError,
+                 "function AbnfParsecTest.P.a_or_b/1 is undefined or private",
+                 fn -> P.a_or_b("A") end
+  end
 end

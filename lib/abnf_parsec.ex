@@ -94,6 +94,8 @@ defmodule AbnfParsec do
     - `:abnf` (`binary`) - ABNF directly in string data
     - `:abnf_file` (`binary`) - ABNF file path
     - `:debug` (`boolean`) - whether to output generated parser code
+    - `:private` (`boolean`) - whether to keep the generated rules parsers as
+      private functions.
 
     - `:skip` (`rulenames`) - rules to be skipped when generating parser code
       - so user can define their own parsec definition
