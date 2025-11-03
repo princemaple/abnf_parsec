@@ -1,3 +1,9 @@
+## v2.1.0 - 2025-11-03
+
+### 🚀 Features
+
+- add :private option to use defparsecp @lud (#101)
+
 ## v2.0.0 - 2025-03-05
 
 ### Highlights 🎉
