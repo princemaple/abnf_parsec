@@ -85,8 +85,8 @@ defmodule AbnfParsec.ParserTest do
                 {:num_literal, [{:base, "x"}, "42"]},
                 {:rulename, "some-rule"}
               ]
-            ], "", %{}, {1, 0},
-            55} = Parser.exception(~s|<any CHAR except "A" and DQUOTE and %x42 and some-rule>|)
+            ], "", %{}, {1, 0}, 55} =
+             Parser.exception(~s|<any CHAR except "A" and DQUOTE and %x42 and some-rule>|)
   end
 
   test "parse concatenation" do
@@ -151,8 +151,7 @@ defmodule AbnfParsec.ParserTest do
                 {:comment, "a = 1"},
                 {:comment, "b does not exist"}
               ]
-            ], "", %{}, {4, 46},
-            46} =
+            ], "", %{}, {4, 46}, 46} =
              Parser.parse("""
              a = "1"
                  ; a = 1
@@ -182,8 +181,8 @@ defmodule AbnfParsec.ParserTest do
                   ]
                 ]
               ]
-            ], "", %{}, {2, 56},
-            56} = Parser.parse(~s|rule = a (3b [c d]) / %x49 5"x" / %x51-59 / 1*2(b / c)|)
+            ], "", %{}, {2, 56}, 56} =
+             Parser.parse(~s|rule = a (3b [c d]) / %x49 5"x" / %x51-59 / 1*2(b / c)|)
   end
 
   test "parse!" do

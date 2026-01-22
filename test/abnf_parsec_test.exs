@@ -229,8 +229,7 @@ defmodule AbnfParsecTest do
                 [string: ["d"], value: [nil]],
                 [string: ["e"], value: [string: ["e\\te"]]]
               ]
-            ], "", %{}, {2, 55},
-            55} =
+            ], "", %{}, {2, 55}, 55} =
              J.object("""
              {"a": {"b": 1.2, "c": [true]}, "d": null, "e": "e\\te"}
              """)
